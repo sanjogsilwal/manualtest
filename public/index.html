@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Campus Study Hub — Thapathali Campus</title>
+  <title>Campus Study Hub â€” Thapathali Campus</title>
   <meta name="description" content="Campus Study Hub: lab manuals, tutorials and student-contributed notes for the departments of IOE, Thapathali Campus." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -29,7 +29,7 @@
     <div class="container">
       <!-- ===== Recent Notices / Events ===== -->
       <section class="section" style="padding-top: 0;">
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 22px;">
+        <div class="two-col-grid">
           <div class="list-card">
             <div class="head">
               <h3>Recent Notices</h3>
@@ -73,7 +73,7 @@
           </div>
           <div class="feature-box">
             <h3>Submit Your Notes</h3>
-            <p>Help your peers — submit your notes for review. Approved notes are published in the public library.</p>
+            <p>Help your peers â€” submit your notes for review. Approved notes are published in the public library.</p>
             <a href="/notes#submit" class="btn btn-link">Submit Notes</a>
           </div>
         </div>
@@ -88,17 +88,17 @@
         <div class="research-grid" id="recentlyAdded">
           <div class="research-card">
             <span class="tag">Loading</span>
-            <h3>Fetching recent materials…</h3>
+            <h3>Fetching recent materialsâ€¦</h3>
             <p>Hold on while we get the latest manuals and notes.</p>
           </div>
           <div class="research-card">
             <span class="tag">Loading</span>
-            <h3>Fetching recent materials…</h3>
+            <h3>Fetching recent materialsâ€¦</h3>
             <p>Hold on while we get the latest manuals and notes.</p>
           </div>
           <div class="research-card">
             <span class="tag">Loading</span>
-            <h3>Fetching recent materials…</h3>
+            <h3>Fetching recent materialsâ€¦</h3>
             <p>Hold on while we get the latest manuals and notes.</p>
           </div>
         </div>
@@ -180,7 +180,7 @@
           <div class="research-card">
             <span class="tag">${escapeHtml(it.type)}</span>
             <h3>${escapeHtml(it.title)}</h3>
-            <p>${escapeHtml(it.description)}…</p>
+            <p>${escapeHtml(it.description)}â€¦</p>
             <a href="${it.link}" class="btn btn-link">${it.linkText}</a>
           </div>
         `).join('');
@@ -192,3 +192,4 @@
   </script>
 </body>
 </html>
+

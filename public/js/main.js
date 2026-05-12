@@ -59,8 +59,8 @@ function buildHeader(activePage = '') {
 
     <nav class="main-nav">
       <div class="container nav-container">
-        <button class="nav-toggle" onclick="document.querySelector('.nav-list').classList.toggle('open')">
-          Menu
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation" onclick="toggleNav(this)">
+          ☰ Menu
         </button>
         <ul class="nav-list">
           <li><a href="/"        class="${activePage === 'home'    ? 'active' : ''}">Home</a></li>
@@ -162,12 +162,32 @@ function buildFooter() {
   `;
 }
 
+/* ----- Mobile nav ------------------------------------------------------ */
+function toggleNav(btn) {
+  const list = document.querySelector('.nav-list');
+  if (!list) return;
+  const isOpen = list.classList.toggle('open');
+  btn.classList.toggle('open', isOpen);
+  btn.textContent = isOpen ? '✕ Close' : '☰ Menu';
+}
+window.toggleNav = toggleNav;
+
 /* ----- Bootstrap ------------------------------------------------------- */
 document.addEventListener('DOMContentLoaded', () => {
   const headerEl = document.getElementById('site-header');
   const footerEl = document.getElementById('site-footer');
   if (headerEl) headerEl.innerHTML = buildHeader(headerEl.dataset.page || '');
   if (footerEl) footerEl.innerHTML = buildFooter();
+
+  // Close mobile nav when any nav link is clicked.
+  document.querySelector('.nav-list')?.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      const list = document.querySelector('.nav-list');
+      const btn  = document.getElementById('navToggle');
+      if (list) list.classList.remove('open');
+      if (btn)  { btn.classList.remove('open'); btn.textContent = '☰ Menu'; }
+    });
+  });
 
   loadScopeDepartments();
   const dept = document.getElementById('scopeDept');
