@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Campus Study Hub — Thapathali Campus</title>
+  <meta name="description" content="Campus Study Hub: lab manuals, tutorials and student-contributed notes for the departments of IOE, Thapathali Campus." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="site-header" id="site-header" data-page="home"></header>
+
+  <!-- ===== Hero ===== -->
+  <section class="hero">
+    <div class="container">
+      <h1>LearnSpace</h1>
+      <p>The official platform for lab manuals, course tutorials and student-contributed notes - organised by department, semester and subject for every learner at Thapathali Campus.</p>
+      <div class="hero-actions">
+        <a href="/manuals" class="btn btn-primary">Browse Lab Manuals</a>
+        <a href="/notes"   class="btn btn-outline">View Notes</a>
+      </div>
+    </div>
+  </section>
+
+  <main>
+    <div class="container">
+      <!-- ===== Recent Notices / Events ===== -->
+      <section class="section" style="padding-top: 0;">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 22px;">
+          <div class="list-card">
+            <div class="head">
+              <h3>Recent Notices</h3>
+              <a href="http://tcioe.edu.np/notices" target="_blank" rel="noopener" class="view-all-link">View All</a>
+            </div>
+            <div class="empty">No notices available.</div>
+          </div>
+          <div class="list-card">
+            <div class="head">
+              <h3>Events</h3>
+              <a href="http://tcioe.edu.np" target="_blank" rel="noopener" class="view-all-link">View All</a>
+            </div>
+            <div class="empty">No events scheduled.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Open Forms ===== -->
+      <section class="section" style="padding-top: 0;">
+        <div class="list-card">
+          <div class="head">
+            <h3>Open Forms</h3>
+          </div>
+          <div class="empty">No active forms available.</div>
+        </div>
+      </section>
+
+      <!-- ===== Discover ===== -->
+      <section class="section">
+        <h2 class="section-title">What's inside</h2>
+        <div class="feature-grid">
+          <div class="feature-box">
+            <h3>Lab Manuals</h3>
+            <p>Department-approved laboratory manuals for every subject and semester, available for download.</p>
+            <a href="/manuals" class="btn btn-link">View Manuals</a>
+          </div>
+          <div class="feature-box">
+            <h3>Student Notes</h3>
+            <p>Notes shared by classmates, reviewed and approved by faculty before they appear here.</p>
+            <a href="/notes" class="btn btn-link">View Notes</a>
+          </div>
+          <div class="feature-box">
+            <h3>Submit Your Notes</h3>
+            <p>Help your peers — submit your notes for review. Approved notes are published in the public library.</p>
+            <a href="/notes#submit" class="btn btn-link">Submit Notes</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Recently added ===== -->
+      <section class="section" style="border-top: 1px solid var(--border); padding-top: 50px;">
+        <span class="section-eyebrow">Resources &amp; Library</span>
+        <h2 class="section-title">Recently added study material</h2>
+        <p class="section-subtitle">Lab manuals and approved notes from across the departments, all in one place.</p>
+
+        <div class="research-grid" id="recentlyAdded">
+          <div class="research-card">
+            <span class="tag">Loading</span>
+            <h3>Fetching recent materials…</h3>
+            <p>Hold on while we get the latest manuals and notes.</p>
+          </div>
+          <div class="research-card">
+            <span class="tag">Loading</span>
+            <h3>Fetching recent materials…</h3>
+            <p>Hold on while we get the latest manuals and notes.</p>
+          </div>
+          <div class="research-card">
+            <span class="tag">Loading</span>
+            <h3>Fetching recent materials…</h3>
+            <p>Hold on while we get the latest manuals and notes.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Submit Your Work ===== -->
+      <section class="section" style="background: var(--bg-soft); margin: 0 -24px; padding: 50px 24px; border-radius: var(--radius);">
+        <span class="section-eyebrow">Contributions</span>
+        <h2 class="section-title">Share Your Work</h2>
+        <p class="section-subtitle">Students and faculty can submit notes and lab materials. Submissions are reviewed by a teacher before publishing.</p>
+
+        <div class="submit-grid">
+          <div class="submit-card">
+            <h3>Submit Note</h3>
+            <p class="desc">Share notes you've prepared with classmates from your department and semester.</p>
+            <ul class="check-list">
+              <li>Title and description</li>
+              <li>Department, semester and subject</li>
+              <li>PDF / DOC / PPT (max 50 MB)</li>
+            </ul>
+            <a href="/notes#submit" class="btn btn-link">Submit Note</a>
+          </div>
+          <div class="submit-card">
+            <h3>Upload Lab Manual</h3>
+            <p class="desc">Faculty and admins can upload approved laboratory manuals for any subject.</p>
+            <ul class="check-list">
+              <li>Department-tagged</li>
+              <li>Linked to a subject and semester</li>
+              <li>Public or Private visibility</li>
+            </ul>
+            <a href="/login" class="btn btn-link">Faculty Login</a>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer" id="site-footer"></footer>
+
+  <script src="/js/main.js"></script>
+  <script>
+    async function loadHomeData() {
+      try {
+        const [manualsRes, notesRes] = await Promise.all([
+          fetch('/api/manuals'),
+          fetch('/api/notes')
+        ]);
+        const manualsData = await manualsRes.json();
+        const notesData   = await notesRes.json();
+
+        const items = [
+          ...manualsData.manuals.slice(0, 3).map(m => ({
+            type: 'Lab Manual',
+            title: m.title,
+            description: (m.description || 'Lab manual for the department.').slice(0, 110),
+            link: `/api/manuals/${m.id}/download`,
+            linkText: 'Download'
+          })),
+          ...notesData.notes.filter(n => n.status === 'approved').slice(0, 3).map(n => ({
+            type: 'Student Note',
+            title: n.title,
+            description: (n.description || 'Student-contributed note.').slice(0, 110),
+            link: `/api/notes/${n.id}/download`,
+            linkText: 'Download'
+          }))
+        ].slice(0, 3);
+
+        const el = document.getElementById('recentlyAdded');
+        if (items.length === 0) {
+          el.innerHTML = `
+            <div class="research-card" style="grid-column: 1 / -1;">
+              <h3>No materials uploaded yet</h3>
+              <p>Once a teacher uploads a manual or a student submits an approved note, it will appear here.</p>
+              <a href="/manuals" class="btn btn-link">Browse Library</a>
+            </div>`;
+          return;
+        }
+        el.innerHTML = items.map(it => `
+          <div class="research-card">
+            <span class="tag">${escapeHtml(it.type)}</span>
+            <h3>${escapeHtml(it.title)}</h3>
+            <p>${escapeHtml(it.description)}…</p>
+            <a href="${it.link}" class="btn btn-link">${it.linkText}</a>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error('Failed to load home data:', err);
+      }
+    }
+    loadHomeData();
+  </script>
+</body>
+</html>

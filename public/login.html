@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In — IOE Thapathali Campus</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body class="login-page">
+  <div class="login-card">
+    <div class="brand-logo">TU</div>
+    <h2>Sign In</h2>
+    <p class="subtitle">Department of Automobile &amp; Mechanical Engineering<br>IOE, Thapathali Campus</p>
+
+    <div id="alertContainer"></div>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="username">Username or Email</label>
+        <input type="text" id="username" name="username" required autocomplete="username" />
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required autocomplete="current-password" />
+      </div>
+      <button type="submit" class="btn btn-primary" id="submitBtn">Sign In</button>
+    </form>
+
+    <div style="margin-top:22px; text-align:center; font-size:13px; color:var(--text-muted);">
+      <a href="/" style="color:var(--primary);">← Back to Home</a>
+    </div>
+
+    <div style="margin-top:22px; padding:14px; background:#fff8e1; border-radius:6px; font-size:12px; color:#874d00; border-left:3px solid var(--warning);">
+      <strong>Note:</strong> Accounts (teacher / admin / super admin) are created by the main admins (Sanjog Silwal &amp; Dipendra Kafle). Students do not need an account — they can browse and submit notes anonymously.
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const alertContainer = document.getElementById('alertContainer');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      alertContainer.innerHTML = '';
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Signing in...';
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alertContainer.innerHTML = `<div class="alert alert-error">${data.error || 'Login failed'}</div>`;
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Sign In';
+          return;
+        }
+        localStorage.setItem('user_token', data.token);
+        localStorage.setItem('user_info',  JSON.stringify(data.user));
+        // Backwards compat keys
+        localStorage.setItem('admin_token', data.token);
+        localStorage.setItem('admin_info',  JSON.stringify(data.user));
+        // Every login lands on the admin dashboard; students don't have accounts.
+        window.location.href = '/admin';
+      } catch (err) {
+        alertContainer.innerHTML = '<div class="alert alert-error">Network error. Please try again.</div>';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Sign In';
+      }
+    });
+
+    // If already logged in, redirect
+    fetch('/api/auth/me', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (d?.user) window.location.href = '/admin';
+      })
+      .catch(() => {});
+  </script>

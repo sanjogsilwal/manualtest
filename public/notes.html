@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Notes — Campus Study Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="site-header" id="site-header" data-page="notes"></header>
+
+  <section class="page-header">
+    <div class="container">
+      <div class="breadcrumb"><a href="/">Home</a> › Notes</div>
+      <h1>Student Notes</h1>
+      <p>Notes contributed by students and approved by the department's teachers.</p>
+    </div>
+  </section>
+
+  <main>
+    <div class="container">
+      <div class="filter-bar">
+        <input type="search" id="searchInput" placeholder="Search notes..." />
+        <select id="subjectFilter"><option value="">All Subjects</option></select>
+        <select id="semesterFilter">
+          <option value="">All Semesters</option>
+          <option>1st Semester</option><option>2nd Semester</option>
+          <option>3rd Semester</option><option>4th Semester</option>
+          <option>5th Semester</option><option>6th Semester</option>
+          <option>7th Semester</option><option>8th Semester</option>
+        </select>
+        <button class="btn btn-secondary" onclick="resetFilters()">Reset</button>
+        <a href="#submit" class="btn btn-primary">+ Submit Note</a>
+      </div>
+
+      <div class="section-bar">
+        <h2 class="section-title" style="margin:0; padding:0;">Approved Notes</h2>
+        <span style="color:var(--text-muted); font-size:14px;" id="notesCount"></span>
+      </div>
+
+      <div id="notesContainer">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+
+      <!-- ========== Submit Note Section ========== -->
+      <section id="submit" style="margin-top: 48px;">
+        <h2 class="section-title">Submit Your Notes</h2>
+        <p class="section-subtitle">Share your study material with classmates. A teacher will review it before it appears in the public list.</p>
+
+        <div class="card" style="max-width: 720px;">
+          <div class="card-body">
+            <div id="submitAlert"></div>
+            <form id="submitForm" enctype="multipart/form-data">
+              <div class="form-group">
+                <label>Note Title *</label>
+                <input type="text" id="noteTitle" required placeholder="e.g. Thermodynamics Unit 3 — summary notes" />
+              </div>
+              <div class="form-group">
+                <label>Description</label>
+                <textarea id="noteDescription" placeholder="What's in these notes?"></textarea>
+              </div>
+              <div class="form-row-3">
+                <div class="form-group">
+                  <label>Department *</label>
+                  <select id="noteDepartment" required>
+                    <option value="">— Select —</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Semester *</label>
+                  <select id="noteSemester" required>
+                    <option value="">— Select —</option>
+                    <option>1st Semester</option><option>2nd Semester</option>
+                    <option>3rd Semester</option><option>4th Semester</option>
+                    <option>5th Semester</option><option>6th Semester</option>
+                    <option>7th Semester</option><option>8th Semester</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Subject</label>
+                  <select id="noteSubject"><option value="">— Select —</option></select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Submitted By *</label>
+                  <input type="text" id="noteSubmittedBy" required placeholder="Your name" />
+                </div>
+                <div class="form-group">
+                  <label>Email (optional)</label>
+                  <input type="email" id="noteSubmittedEmail" placeholder="you@example.com" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label>File * <small>(PDF, DOC, DOCX, PPT, ZIP — max 50 MB)</small></label>
+                <input type="file" id="noteFile" required accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.txt" />
+              </div>
+              <button type="submit" class="btn btn-primary" id="submitBtn">Submit Note for Review</button>
+            </form>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer" id="site-footer"></footer>
+
+  <script src="/js/main.js"></script>
+  <script>
+    let allSubjects = [];
+    let debounceTimer;
+
+    async function loadDepartments() {
+      try {
+        const res = await fetch('/api/admin/departments');
+        const data = await res.json();
+        const sel = document.getElementById('noteDepartment');
+        sel.innerHTML = '<option value="">— Select —</option>' +
+          data.departments.map(d => `<option value="${d.code}">${escapeHtml(d.name)}</option>`).join('') +
+          '<option value="both">All Departments</option>';
+        data.departments.forEach(d => setDeptLabel(d.code, d.name));
+      } catch (_) { /* leave default */ }
+    }
+
+    async function loadSubjects() {
+      // Load every subject once. Each select then filters the list itself
+      // depending on the user's department/semester choice.
+      const res = await fetch('/api/subjects');
+      const data = await res.json();
+      allSubjects = data.subjects;
+      refreshSubjectFilter();
+      refreshNoteSubject();
+    }
+
+    function filterSubjects(department, semester) {
+      const dept = (department || '').toLowerCase();
+      return allSubjects.filter(s => {
+        if (dept && dept !== 'both' && s.department !== dept && s.department !== 'both') return false;
+        if (semester && s.semester !== semester) return false;
+        return true;
+      });
+    }
+
+    function refreshSubjectFilter() {
+      const scope = getScope();
+      const sel   = document.getElementById('subjectFilter');
+      const cur   = sel.value;
+      const list  = filterSubjects(scope.department, scope.semester);
+      sel.innerHTML = '<option value="">All Subjects</option>' +
+        list.map(s => `<option value="${s.id}">${escapeHtml(s.name)} — ${escapeHtml(s.semester)}</option>`).join('');
+      sel.value = cur;
+    }
+
+    function refreshNoteSubject() {
+      const sel  = document.getElementById('noteSubject');
+      const cur  = sel.value;
+      const dept = document.getElementById('noteDepartment').value;
+      const sem  = document.getElementById('noteSemester').value;
+      const list = filterSubjects(dept, sem);
+      if (list.length === 0 && (dept || sem)) {
+        sel.innerHTML = '<option value="">— No subjects for this department / semester —</option>';
+        return;
+      }
+      sel.innerHTML = '<option value="">— Select —</option>' +
+        list.map(s => `<option value="${s.id}">${escapeHtml(s.name)} — ${escapeHtml(s.semester)}</option>`).join('');
+      sel.value = cur;
+    }
+
+    // Re-filter the submission form's subject when user changes dept/sem.
+    document.getElementById('noteDepartment').addEventListener('change', refreshNoteSubject);
+    document.getElementById('noteSemester').addEventListener('change',  refreshNoteSubject);
+
+    async function loadNotes() {
+      const scope    = getScope();
+      const search   = document.getElementById('searchInput').value.trim().toLowerCase();
+      const subject  = document.getElementById('subjectFilter').value;
+      const semester = document.getElementById('semesterFilter').value || scope.semester;
+      const dept     = scope.department;
+
+      const params = new URLSearchParams();
+      if (subject)  params.set('subject_id', subject);
+      if (semester) params.set('semester',   semester);
+      if (dept)     params.set('department', dept);
+
+      const container = document.getElementById('notesContainer');
+      container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+      try {
+        const res = await fetch('/api/notes?' + params.toString());
+        const data = await res.json();
+        let notes = data.notes;
+        if (search) {
+          notes = notes.filter(n =>
+            (n.title || '').toLowerCase().includes(search) ||
+            (n.description || '').toLowerCase().includes(search) ||
+            (n.subject_name || '').toLowerCase().includes(search));
+        }
+        document.getElementById('notesCount').textContent =
+          `${notes.length} ${notes.length === 1 ? 'note' : 'notes'} found`;
+
+        if (notes.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="icon">N</div>
+              <h3>No notes found</h3>
+              <p>Be the first to share study notes for this subject.</p>
+            </div>`;
+          return;
+        }
+        container.innerHTML = `<div class="manuals-grid">${notes.map(noteCard).join('')}</div>`;
+      } catch (err) {
+        container.innerHTML = '<p style="text-align:center; padding:40px;">Failed to load notes.</p>';
+      }
+    }
+
+    function noteCard(n) {
+      return `
+        <article class="manual-card">
+          <div class="manual-card-top" style="background:linear-gradient(135deg, var(--primary), #335a96);">
+            <div class="manual-icon">${fileIcon(n.file_type)}</div>
+            <h3>${escapeHtml(n.title)}</h3>
+            <div class="meta">${escapeHtml(n.subject_name || n.subject || 'Note')} • ${escapeHtml(n.semester)}</div>
+          </div>
+          <div class="manual-card-body">
+            <p class="desc">${escapeHtml((n.description || 'No description provided.').slice(0, 150))}${(n.description || '').length > 150 ? '…' : ''}</p>
+            <div class="manual-meta-row">
+              <span class="manual-tag">${deptLabel(n.department)}</span>
+              <span class="manual-tag">${(n.file_type || '').toUpperCase()}</span>
+              <span class="manual-tag">${formatBytes(n.file_size)}</span>
+              <span class="manual-tag">${escapeHtml(n.submitted_by || 'Student')}</span>
+            </div>
+          </div>
+          <div class="manual-card-footer">
+            <span class="download-count">${formatDate(n.created_at)}</span>
+            <a href="/api/notes/${n.id}/download" class="btn btn-primary btn-sm">Download</a>
+          </div>
+        </article>`;
+    }
+
+    function resetFilters() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('subjectFilter').value = '';
+      document.getElementById('semesterFilter').value = '';
+      loadNotes();
+    }
+
+    document.getElementById('searchInput').addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(loadNotes, 300);
+    });
+    document.getElementById('subjectFilter').addEventListener('change',  loadNotes);
+    document.getElementById('semesterFilter').addEventListener('change', loadNotes);
+    document.addEventListener('scopechange', () => { refreshSubjectFilter(); loadNotes(); });
+
+    document.getElementById('submitForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      const alertEl = document.getElementById('submitAlert');
+      alertEl.innerHTML = '';
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      try {
+        const fd = new FormData();
+        fd.append('title',           document.getElementById('noteTitle').value);
+        fd.append('description',     document.getElementById('noteDescription').value);
+        fd.append('department',      document.getElementById('noteDepartment').value);
+        fd.append('semester',        document.getElementById('noteSemester').value);
+        fd.append('subject_id',      document.getElementById('noteSubject').value);
+        fd.append('submitted_by',    document.getElementById('noteSubmittedBy').value);
+        fd.append('submitted_email', document.getElementById('noteSubmittedEmail').value);
+        fd.append('file',            document.getElementById('noteFile').files[0]);
+
+        const res = await fetch('/api/notes', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (res.ok) {
+          alertEl.innerHTML = `<div class="alert alert-success">${escapeHtml(data.message || 'Submitted!')}</div>`;
+          document.getElementById('submitForm').reset();
+          loadNotes();
+        } else {
+          alertEl.innerHTML = `<div class="alert alert-error">${escapeHtml(data.error || 'Submission failed')}</div>`;
+        }
+      } catch (err) {
+        alertEl.innerHTML = '<div class="alert alert-error">Network error. Please try again.</div>';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Submit Note for Review';
+      }
+    });
+
+    loadDepartments();
+    loadSubjects().then(loadNotes);
+  </script>
+</body>
+</html>

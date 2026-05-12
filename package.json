@@ -1,0 +1,27 @@
+{
+  "name": "tcioe-mech-manuals",
+  "version": "1.0.0",
+  "description": "Manual/Tutorial Management System - Department of Automobile and Mechanical Engineering, Thapathali Campus",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "init-db": "node init-db.js"
+  },
+  "keywords": ["manuals", "tutorials", "education", "thapathali", "mechanical-engineering"],
+  "author": "Department of Automobile and Mechanical Engineering",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.3.0",
+    "cookie-parser": "^1.4.6",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "express-session": "^1.18.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}

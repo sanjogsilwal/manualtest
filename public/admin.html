@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel - Campus Study Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    .admin-header {
+      background: var(--panel);
+      color: var(--panel-text);
+      padding: 14px 0;
+      border-bottom: 3px solid var(--accent);
+    }
+    .admin-header .container {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 14px; flex-wrap: wrap;
+    }
+    .admin-header .brand-text h1 { color: var(--panel-text); font-size: 16px; }
+    .admin-header .brand-text .sub { color: var(--panel-text-muted); font-size: 12px; }
+    .admin-header .brand-text .dept { color: var(--accent-dark); }
+    .admin-header .brand-logo { width: 44px; height: 44px; font-size: 18px; border: 2px solid var(--accent); }
+    .admin-header .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .admin-header .header-actions span { font-size: 13px; color: var(--panel-text-muted); }
+
+    /* Subjects three-column picker */
+    .subjects-three-col {
+      display: grid;
+      grid-template-columns: 200px 190px 1fr;
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      overflow: hidden;
+      min-height: 420px;
+    }
+    .subjects-col { border-right: 1px solid var(--border-strong); display: flex; flex-direction: column; }
+    .subjects-col:last-child { border-right: none; }
+    .subjects-col-header {
+      padding: 10px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text-muted);
+      background: var(--panel);
+      border-bottom: 1px solid var(--border-strong);
+      flex-shrink: 0;
+    }
+    .subjects-col-body { overflow-y: auto; flex: 1; }
+    .subjects-col-item {
+      padding: 10px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background .12s;
+      line-height: 1.4;
+    }
+    .subjects-col-item:hover { background: var(--panel); }
+    .subjects-col-item.active {
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+    }
+    .subjects-col-hint {
+      padding: 18px 14px;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-style: italic;
+    }
+    .subjects-col-main .subjects-col-body { padding: 12px; }
+  </style>
+</head>
+<body>
+  <header class="admin-header">
+    <div class="container">
+      <a href="/admin" class="brand" style="text-decoration:none; color:#fff;">
+        <div class="brand-logo placeholder"><img src="./images/tu-logo.png" alt="logo"></div>
+        <div class="brand-text">
+          <span class="sub">IOE Thapathali Campus</span>
+          <h1>LearnSpace - Admin</h1>
+          <span class="dept">Upload &amp; Notes Management</span>
+        </div>
+      </a>
+      <div class="header-actions">
+        <span id="welcomeText">Loading...</span>
+        <a href="/" class="btn btn-outline btn-sm" target="_blank">View Site</a>
+        <button class="btn btn-primary btn-sm" id="logoutBtn">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="user-info">
+        <div class="name" id="adminName">—</div>
+        <div class="role" id="adminRole">—</div>
+      </div>
+      <ul class="admin-nav">
+        <li><a href="#dashboard"   class="active" data-section="dashboard">Dashboard</a></li>
+        <li><a href="#manuals"     data-section="manuals">Upload</a></li>
+        <li><a href="#departments" data-section="departments" id="departmentsLink" style="display:none;">Departments</a></li>
+        <li><a href="#subjects"    data-section="subjects">Subjects</a></li>
+        <li><a href="#categories"  data-section="categories">Categories</a></li>
+        <li><a href="#notes"       data-section="notes">Student Notes</a></li>
+        <li><a href="#users"       data-section="users" id="usersLink" style="display:none;">Users</a></li>
+        <li><a href="#loginlog"    data-section="loginlog">Login Log</a></li>
+        <li><a href="#activity"    data-section="activity">Activity Log</a></li>
+        <li><a href="#account"     data-section="account">My Account</a></li>
+      </ul>
+    </aside>
+
+    <main class="admin-content">
+      <div id="alertContainer"></div>
+
+      <!-- ===== Dashboard ===== -->
+      <section class="admin-section active" id="section-dashboard">
+        <div class="section-bar"><h2>Dashboard Overview</h2></div>
+        <div class="dashboard-stats">
+          <div class="dash-stat"><div class="num" id="ds-manuals">—</div><div class="lbl">Total Manuals</div></div>
+          <div class="dash-stat"><div class="num" id="ds-public">—</div><div class="lbl">Public</div></div>
+          <div class="dash-stat"><div class="num" id="ds-private">—</div><div class="lbl">Private</div></div>
+          <div class="dash-stat"><div class="num" id="ds-subjects">—</div><div class="lbl">Subjects</div></div>
+          <div class="dash-stat"><div class="num" id="ds-notes-pending">—</div><div class="lbl">Notes Pending</div></div>
+          <div class="dash-stat"><div class="num" id="ds-downloads">—</div><div class="lbl">Total Downloads</div></div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
+          <div class="card">
+            <div class="card-header"><h3>Recent Activity</h3></div>
+            <div class="card-body" id="recentActivity"><div class="loading"><div class="spinner"></div></div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Most Downloaded</h3></div>
+            <div class="card-body" id="topDownloaded"><div class="loading"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Manuals ===== -->
+      <section class="admin-section" id="section-manuals">
+        <div class="section-bar">
+          <h2>Manage Lab Manuals</h2>
+          <button class="btn btn-primary" id="btnUpload">+ Upload New Manual</button>
+        </div>
+        <div class="filter-bar" style="grid-template-columns: 1fr 1fr 1fr 1fr auto;">
+          <input type="search" id="adminSearchInput" placeholder="Search manuals..." />
+          <select id="adminCategoryFilter"><option value="">All Categories</option></select>
+          <select id="adminDeptFilter"><option value="">All Departments</option></select>
+          <select id="adminSemFilter">
+            <option value="">All Semesters</option>
+            <option>1st Semester</option><option>2nd Semester</option>
+            <option>3rd Semester</option><option>4th Semester</option>
+            <option>5th Semester</option><option>6th Semester</option>
+            <option>7th Semester</option><option>8th Semester</option>
+          </select>
+          <button class="btn btn-secondary" onclick="loadAdminManuals()">Refresh</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Title</th><th>Department</th><th>Semester</th><th>Subject</th>
+                <th>File</th><th>Downloads</th><th>Visibility</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="manualsTableBody">
+              <tr><td colspan="8" style="text-align:center; padding:30px;"><div class="spinner"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== Departments (super_admin only) ===== -->
+      <section class="admin-section" id="section-departments">
+        <div class="section-bar">
+          <h2>Manage Departments</h2>
+          <button class="btn btn-primary" id="btnAddDept">+ Add Department</button>
+        </div>
+        <div class="alert alert-info">Adding a new department lets you organise subjects, lab manuals and notes under it. Only super-admins can create or remove departments.</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Code</th><th>Description</th><th>Subjects</th><th>Created</th><th>Actions</th></tr></thead>
+            <tbody id="deptsTableBody">
+              <tr><td colspan="6" style="text-align:center; padding:30px;"><div class="spinner"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== Subjects ===== -->
+      <section class="admin-section" id="section-subjects">
+        <div class="section-bar">
+          <h2>Manage Subjects</h2>
+          <button class="btn btn-primary" id="btnAddSubject">+ Add Subject</button>
+        </div>
+        <div class="alert alert-info">Select a department, then a semester to view and manage its subjects.</div>
+        <div id="subjectsContainer">
+          <div class="subjects-three-col">
+            <div class="subjects-col">
+              <div class="subjects-col-header">Department</div>
+              <div class="subjects-col-body" id="subjectsDeptCol"><div class="subjects-col-hint">Loading…</div></div>
+            </div>
+            <div class="subjects-col">
+              <div class="subjects-col-header">Semester</div>
+              <div class="subjects-col-body" id="subjectsSemCol"><div class="subjects-col-hint">Select a department</div></div>
+            </div>
+            <div class="subjects-col subjects-col-main">
+              <div class="subjects-col-header" id="subjectsColHeader">Subjects</div>
+              <div class="subjects-col-body" id="subjectsListCol"><div class="subjects-col-hint">Select a department and semester</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Categories ===== -->
+      <section class="admin-section" id="section-categories">
+        <div class="section-bar">
+          <h2>Categories</h2>
+          <button class="btn btn-primary" id="btnAddCategory">+ Add Category</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Description</th><th>Manuals</th><th>Actions</th></tr></thead>
+            <tbody id="categoriesTableBody">
+              <tr><td colspan="4" style="text-align:center; padding:30px;"><div class="spinner"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== Notes review ===== -->
+      <section class="admin-section" id="section-notes">
+        <div class="section-bar">
+          <h2>Student Notes</h2>
+          <div class="tabs" style="margin: 0;">
+            <button class="tab active" data-status="pending">Pending</button>
+            <button class="tab" data-status="approved">Approved</button>
+            <button class="tab" data-status="rejected">Rejected</button>
+            <button class="tab" data-status="">All</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Title</th><th>Submitted by</th><th>Department</th><th>Semester</th><th>Subject</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="notesTableBody">
+              <tr><td colspan="7" style="text-align:center; padding:30px;"><div class="spinner"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== Users (super_admin only) ===== -->
+      <section class="admin-section" id="section-users">
+        <div class="section-bar">
+          <h2>User Management</h2>
+          <button class="btn btn-primary" id="btnAddUser">+ Add User</button>
+        </div>
+        <div class="alert alert-info">
+          Only the main admins (<strong>Sanjog Silwal</strong> and <strong>Dipendra Kafle</strong>) can create or remove users (admins and teachers). There is no student account in the system — students browse and submit anonymously.
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Username</th><th>Full Name</th><th>Email</th><th>Role</th><th>Department</th><th>Created</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <tr><td colspan="7" style="text-align:center; padding:30px;"><div class="spinner"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== Login Log ===== -->
+      <section class="admin-section" id="section-loginlog">
+        <div class="section-bar"><h2>Login &amp; Logout Log</h2></div>
+        <div class="alert alert-info">Records sign-in and sign-out events for admins and teachers. Super-admin activity is intentionally not tracked here.</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>When</th><th>User</th><th>Role</th><th>Action</th><th>IP</th><th>User Agent</th></tr></thead>
+            <tbody id="loginLogTableBody">
+              <tr><td colspan="6" style="text-align:center; padding:30px;"><div class="spinner"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== Activity Log ===== -->
+      <section class="admin-section" id="section-activity">
+        <div class="section-bar"><h2>Activity Log</h2></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>When</th><th>User</th><th>Action</th><th>Details</th></tr></thead>
+            <tbody id="activityTableBody">
+              <tr><td colspan="4" style="text-align:center; padding:30px;"><div class="spinner"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== Account ===== -->
+      <section class="admin-section" id="section-account">
+        <div class="section-bar"><h2>My Account</h2></div>
+        <div class="card" style="max-width: 600px;">
+          <div class="card-header"><h3>Change Password</h3></div>
+          <div class="card-body">
+            <div id="passwordAlert"></div>
+            <form id="passwordForm">
+              <div class="form-group"><label>Current Password</label><input type="password" id="currentPassword" required /></div>
+              <div class="form-group"><label>New Password</label><input type="password" id="newPassword" required minlength="6" /><small>Minimum 6 characters</small></div>
+              <div class="form-group"><label>Confirm New Password</label><input type="password" id="confirmPassword" required /></div>
+              <button type="submit" class="btn btn-primary">Update Password</button>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ===== Manual modal ===== -->
+  <div class="modal-overlay" id="manualModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="manualModalTitle">Upload New Manual</h3>
+        <button class="modal-close" onclick="closeModal('manualModal')">×</button>
+      </div>
+      <form id="manualForm" enctype="multipart/form-data">
+        <div class="modal-body">
+          <input type="hidden" id="manualId" />
+          <div class="form-group"><label>Title *</label><input type="text" id="manualTitle" required /></div>
+          <div class="form-group"><label>Description</label><textarea id="manualDescription" placeholder="Brief description"></textarea></div>
+
+          <div class="form-row-3">
+            <div class="form-group">
+              <label>Department *</label>
+              <select id="manualDepartment" required></select>
+            </div>
+            <div class="form-group">
+              <label>Semester</label>
+              <select id="manualSemester">
+                <option value="">— Select —</option>
+                <option>1st Semester</option><option>2nd Semester</option>
+                <option>3rd Semester</option><option>4th Semester</option>
+                <option>5th Semester</option><option>6th Semester</option>
+                <option>7th Semester</option><option>8th Semester</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Subject</label>
+              <select id="manualSubjectId"><option value="">— Select —</option></select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Subject (free text)</label>
+              <input type="text" id="manualSubject" placeholder="e.g., Thermodynamics" />
+            </div>
+            <div class="form-group">
+              <label>Category</label>
+              <select id="manualCategory"><option value="">— Uncategorized —</option></select>
+            </div>
+          </div>
+
+          <div class="form-group" id="fileGroup">
+            <label>File * <small>(PDF, DOC, DOCX, PPT, ZIP — max 50 MB)</small></label>
+            <input type="file" id="manualFile" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.txt" />
+          </div>
+
+          <div class="form-checkbox">
+            <input type="checkbox" id="manualIsPublic" checked />
+            <label for="manualIsPublic">Public — visible to all visitors (uncheck to make Private; only signed-in users can view)</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('manualModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="manualSubmitBtn">Upload Manual</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== Subject modal ===== -->
+  <div class="modal-overlay" id="subjectModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="subjectModalTitle">Add Subject</h3>
+        <button class="modal-close" onclick="closeModal('subjectModal')">×</button>
+      </div>
+      <form id="subjectForm">
+        <div class="modal-body">
+          <input type="hidden" id="subjectId" />
+          <div class="form-row">
+            <div class="form-group"><label>Name *</label><input type="text" id="subjectName" required /></div>
+            <div class="form-group"><label>Code</label><input type="text" id="subjectCode" placeholder="e.g., ME 501" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Department *</label>
+              <select id="subjectDepartment" required></select>
+            </div>
+            <div class="form-group">
+              <label>Semester *</label>
+              <select id="subjectSemester" required>
+                <option value="">— Select —</option>
+                <option>1st Semester</option><option>2nd Semester</option>
+                <option>3rd Semester</option><option>4th Semester</option>
+                <option>5th Semester</option><option>6th Semester</option>
+                <option>7th Semester</option><option>8th Semester</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group"><label>Description</label><textarea id="subjectDescription"></textarea></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('subjectModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== Department modal ===== -->
+  <div class="modal-overlay" id="deptModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="deptModalTitle">Add Department</h3>
+        <button class="modal-close" onclick="closeModal('deptModal')">×</button>
+      </div>
+      <form id="deptForm">
+        <div class="modal-body">
+          <input type="hidden" id="deptId" />
+          <div class="form-row">
+            <div class="form-group"><label>Name *</label><input type="text" id="deptName" required placeholder="e.g., Civil Engineering" /></div>
+            <div class="form-group"><label>Code *</label><input type="text" id="deptCode" required placeholder="e.g., civil" /><small>Lowercase short identifier (a-z, 0-9, _)</small></div>
+          </div>
+          <div class="form-group"><label>Description</label><textarea id="deptDescription"></textarea></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('deptModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== Category modal ===== -->
+  <div class="modal-overlay" id="categoryModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="categoryModalTitle">Add Category</h3>
+        <button class="modal-close" onclick="closeModal('categoryModal')">×</button>
+      </div>
+      <form id="categoryForm">
+        <div class="modal-body">
+          <input type="hidden" id="categoryId" />
+          <div class="form-group"><label>Name *</label><input type="text" id="categoryName" required /></div>
+          <div class="form-group"><label>Description</label><textarea id="categoryDescription"></textarea></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('categoryModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== User modal ===== -->
+  <div class="modal-overlay" id="userModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="userModalTitle">Add User</h3>
+        <button class="modal-close" onclick="closeModal('userModal')">×</button>
+      </div>
+      <form id="userForm">
+        <div class="modal-body">
+          <input type="hidden" id="userId" />
+          <div class="form-row">
+            <div class="form-group"><label>Username *</label><input type="text" id="userUsername" required /></div>
+            <div class="form-group"><label>Full Name *</label><input type="text" id="userFullName" required /></div>
+          </div>
+          <div class="form-group"><label>Email *</label><input type="email" id="userEmail" required /></div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Password <small id="passwordHint">(min 6 chars)</small></label>
+              <input type="password" id="userPassword" minlength="6" />
+            </div>
+            <div class="form-group">
+              <label>Role *</label>
+              <select id="userRole" required>
+                <option value="teacher">Teacher</option>
+                <option value="admin">Admin</option>
+                <option value="super_admin">Super Admin</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Department</label>
+            <select id="userDepartment"><option value="">—</option></select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('userModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/main.js"></script>
+  <script src="/js/admin.js"></script>
+</body>
+</html>

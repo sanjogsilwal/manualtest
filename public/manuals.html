@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lab Manuals — Campus Study Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="site-header" id="site-header" data-page="manuals"></header>
+
+  <section class="page-header">
+    <div class="container">
+      <div class="breadcrumb"><a href="/">Home</a> › Lab Manuals</div>
+      <h1>Lab Manuals &amp; Tutorials</h1>
+      <p>Browse, search and download laboratory manuals approved by the department.</p>
+    </div>
+  </section>
+
+  <main>
+    <div class="container">
+      <div class="filter-bar">
+        <input type="search" id="searchInput" placeholder="Search by title or keyword..." />
+        <select id="subjectFilter"><option value="">All Subjects</option></select>
+        <select id="categoryFilter"><option value="">All Categories</option></select>
+        <select id="semesterFilter">
+          <option value="">All Semesters</option>
+          <option>1st Semester</option><option>2nd Semester</option>
+          <option>3rd Semester</option><option>4th Semester</option>
+          <option>5th Semester</option><option>6th Semester</option>
+          <option>7th Semester</option><option>8th Semester</option>
+        </select>
+        <button class="btn btn-secondary" onclick="resetFilters()">Reset</button>
+      </div>
+
+      <div class="section-bar">
+        <h2 class="section-title" id="resultsTitle" style="margin:0; padding:0;">All Manuals</h2>
+        <span style="color:var(--text-muted); font-size:14px;" id="resultsCount"></span>
+      </div>
+
+      <div id="manualsContainer">
+        <div class="loading"><div class="spinner"></div><p>Loading...</p></div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer" id="site-footer"></footer>
+
+  <script src="/js/main.js"></script>
+  <script>
+    let allCategories = [];
+    let allSubjects   = [];
+    let debounceTimer;
+
+    async function loadCategories() {
+      const res = await fetch('/api/admin/categories');
+      const data = await res.json();
+      allCategories = data.categories;
+      const sel = document.getElementById('categoryFilter');
+      sel.innerHTML = '<option value="">All Categories</option>' +
+        allCategories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+    }
+    async function loadSubjects() {
+      const scope = getScope();
+      const p = new URLSearchParams();
+      if (scope.department) p.set('department', scope.department);
+      if (scope.semester)   p.set('semester',   scope.semester);
+      const res = await fetch('/api/subjects?' + p.toString());
+      const data = await res.json();
+      allSubjects = data.subjects;
+      const sel = document.getElementById('subjectFilter');
+      sel.innerHTML = '<option value="">All Subjects</option>' +
+        allSubjects.map(s => `<option value="${s.id}">${escapeHtml(s.name)} — ${escapeHtml(s.semester)}</option>`).join('');
+    }
+
+    async function loadManuals() {
+      const scope    = getScope();
+      const search   = document.getElementById('searchInput').value;
+      const cat      = document.getElementById('categoryFilter').value;
+      const subject  = document.getElementById('subjectFilter').value;
+      const semester = document.getElementById('semesterFilter').value || scope.semester;
+      const dept     = scope.department;
+
+      const params = new URLSearchParams();
+      if (search)     params.set('search', search);
+      if (cat)        params.set('category', cat);
+      if (subject)    params.set('subject_id', subject);
+      if (semester)   params.set('semester', semester);
+      if (dept)       params.set('department', dept);
+
+      const container = document.getElementById('manualsContainer');
+      container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+      try {
+        const res = await fetch('/api/manuals?' + params.toString());
+        const data = await res.json();
+        renderManuals(data.manuals);
+      } catch (e) {
+        container.innerHTML = '<p style="text-align:center; padding:40px;">Failed to load manuals.</p>';
+      }
+    }
+
+    function renderManuals(manuals) {
+      const container = document.getElementById('manualsContainer');
+      document.getElementById('resultsCount').textContent =
+        `${manuals.length} ${manuals.length === 1 ? 'manual' : 'manuals'} found`;
+
+      if (manuals.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">M</div>
+            <h3>No manuals found</h3>
+            <p>Try changing the filters above or clearing your department/semester selection.</p>
+          </div>`;
+        return;
+      }
+      container.innerHTML = `<div class="manuals-grid">${manuals.map(manualCard).join('')}</div>`;
+    }
+
+    function manualCard(m) {
+      return `
+        <article class="manual-card">
+          <div class="manual-card-top">
+            <div class="manual-icon">${fileIcon(m.file_type)}</div>
+            <h3>${escapeHtml(m.title)}</h3>
+            <div class="meta">${escapeHtml(m.subject || m.category_name || 'Uncategorized')} ${m.semester ? '• ' + escapeHtml(m.semester) : ''}</div>
+          </div>
+          <div class="manual-card-body">
+            <p class="desc">${escapeHtml((m.description || 'No description provided.').slice(0, 150))}${(m.description || '').length > 150 ? '…' : ''}</p>
+            <div class="manual-meta-row">
+              <span class="manual-tag">${deptLabel(m.department) || 'Both Depts'}</span>
+              ${m.subject_name ? `<span class="manual-tag">${escapeHtml(m.subject_name)}</span>` : ''}
+              <span class="manual-tag">${(m.file_type || '').toUpperCase()}</span>
+              <span class="manual-tag">${formatBytes(m.file_size)}</span>
+              <span class="manual-tag">${formatDate(m.created_at)}</span>
+            </div>
+          </div>
+          <div class="manual-card-footer">
+            <span class="download-count">${m.download_count} downloads</span>
+            <a href="/api/manuals/${m.id}/download" class="btn btn-primary btn-sm">Download</a>
+          </div>
+        </article>`;
+    }
+
+    function resetFilters() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('categoryFilter').value = '';
+      document.getElementById('subjectFilter').value  = '';
+      document.getElementById('semesterFilter').value = '';
+      loadManuals();
+    }
+
+    document.getElementById('searchInput').addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(loadManuals, 300);
+    });
+    document.getElementById('categoryFilter').addEventListener('change', loadManuals);
+    document.getElementById('subjectFilter').addEventListener('change',  loadManuals);
+    document.getElementById('semesterFilter').addEventListener('change', loadManuals);
+
+    document.addEventListener('scopechange', () => { loadSubjects(); loadManuals(); });
+
+    const urlSearch = new URLSearchParams(window.location.search).get('search');
+    if (urlSearch) document.getElementById('searchInput').value = urlSearch;
+
+    Promise.all([loadCategories(), loadSubjects()]).then(loadManuals);
+  </script>
+</body>
+</html>
