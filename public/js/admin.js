@@ -668,6 +668,63 @@ $('btnAddSubject').addEventListener('click', () => {
   openModal('subjectModal');
 });
 
+$('btnImportSubjects').addEventListener('click', () => {
+  $('importSubjectFile').value = '';
+  $('importSubjectResult').style.display = 'none';
+  $('importSubjectResult').innerHTML = '';
+  // Populate department dropdown (same options as the add form)
+  const sel = $('importSubjectDepartment');
+  const depts = [...allDepartments, { code: 'both', name: 'Common (Both Departments)' }];
+  sel.innerHTML = depts.map(d =>
+    `<option value="${escapeHtml(d.code)}">${escapeHtml(d.name)}</option>`
+  ).join('');
+  openModal('subjectImportModal');
+});
+
+$('btnDoImportSubjects').addEventListener('click', async () => {
+  const file = $('importSubjectFile').files[0];
+  const dept = $('importSubjectDepartment').value;
+  const resultEl = $('importSubjectResult');
+
+  if (!file) { showAlert('error', 'Please select a file'); return; }
+
+  const form = new FormData();
+  form.append('file', file);
+  form.append('department', dept);
+
+  $('btnDoImportSubjects').disabled = true;
+  $('btnDoImportSubjects').textContent = 'Importing…';
+  resultEl.style.display = 'none';
+
+  try {
+    const res  = await fetch('/api/subjects/import', { method: 'POST', credentials: 'include', body: form });
+    const data = await res.json();
+
+    if (!res.ok) {
+      resultEl.innerHTML = `<div class="alert alert-error">${escapeHtml(data.error || 'Import failed')}</div>`;
+    } else {
+      let html = `<div class="alert alert-success">
+        <strong>Done.</strong> ${data.added} subject(s) added, ${data.skipped} duplicate(s) skipped.
+      </div>`;
+      if (data.errors && data.errors.length) {
+        html += `<div class="alert alert-warning" style="margin-top:8px;">
+          <strong>Warnings (${data.errors.length}):</strong><br>
+          ${data.errors.map(e => escapeHtml(e)).join('<br>')}
+        </div>`;
+      }
+      resultEl.innerHTML = html;
+      await loadSubjects();
+    }
+    resultEl.style.display = 'block';
+  } catch (e) {
+    resultEl.innerHTML = `<div class="alert alert-error">Network error: ${escapeHtml(e.message)}</div>`;
+    resultEl.style.display = 'block';
+  } finally {
+    $('btnDoImportSubjects').disabled = false;
+    $('btnDoImportSubjects').textContent = 'Import';
+  }
+});
+
 function editSubject(id) {
   const s = allSubjects.find(x => x.id === id);
   if (!s) return;

@@ -110,7 +110,33 @@ module.exports = (db) => {
     res.json({ manual });
   });
 
-  // GET /api/manuals/:id/download — stream the file
+  // GET /api/manuals/:id/view — serve PDF inline for browser viewing (no download count)
+  router.get('/:id/view', optionalAuth, (req, res) => {
+    const manual = db.prepare('SELECT * FROM manuals WHERE id = ?').get(req.params.id);
+    if (!manual) return res.status(404).json({ error: 'Manual not found' });
+
+    if (!manual.is_public && !req.admin) {
+      return res.status(403).send('This manual is private — please log in to view it.');
+    }
+
+    if (manual.file_type !== 'pdf') {
+      return res.status(415).send('Only PDF files can be viewed inline.');
+    }
+
+    const filePath = path.join(UPLOAD_DIR, manual.file_name);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'File missing on server' });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline');
+    const stream = fs.createReadStream(filePath);
+    stream.on('error', (err) => {
+      console.error('PDF stream error:', err);
+      if (!res.headersSent) res.status(500).json({ error: 'Failed to read file' });
+    });
+    stream.pipe(res);
+  });
+
+  // GET /api/manuals/:id/download — stream the file as attachment
   router.get('/:id/download', optionalAuth, (req, res) => {
     const manual = db.prepare('SELECT * FROM manuals WHERE id = ?').get(req.params.id);
     if (!manual) return res.status(404).json({ error: 'Manual not found' });

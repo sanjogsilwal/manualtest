@@ -1,7 +1,38 @@
 {
   "permissions": {
     "allow": [
-      "Bash(powershell *)"
+      "Bash(powershell *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Dipendra Kafle\\\\OneDrive\\\\Desktop\\\\manuals-system\" -Recurse -File)",
+      "Bash(Select-Object FullName)",
+      "Bash(Sort-Object FullName)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\Dipendra Kafle\\\\OneDrive\\\\Desktop\\\\manuals-system\\\\client\\\\src\\\\contexts\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\Dipendra Kafle\\\\OneDrive\\\\Desktop\\\\manuals-system\\\\client\\\\src\\\\components\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\Dipendra Kafle\\\\OneDrive\\\\Desktop\\\\manuals-system\\\\client\\\\src\\\\pages\\\\Admin\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\Dipendra Kafle\\\\OneDrive\\\\Desktop\\\\manuals-system\\\\client\\\\src\\\\utils\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\Dipendra Kafle\\\\OneDrive\\\\Desktop\\\\manuals-system\\\\client\\\\public\\\\images\")",
+      "Bash(Copy-Item C:\\\\Users\\\\Dipendra Kafle\\\\OneDrive\\\\Desktop\\\\manuals-system\\\\public\\\\images\\\\* *)",
+      "Bash(cp -r \"/c/Users/Dipendra Kafle/OneDrive/Desktop/manuals-system/public/images/.\" \"/c/Users/Dipendra Kafle/OneDrive/Desktop/manuals-system/client/public/images/\")",
+      "Bash(cp \"/c/Users/Dipendra Kafle/OneDrive/Desktop/manuals-system/public/css/style.css\" \"/c/Users/Dipendra Kafle/OneDrive/Desktop/manuals-system/client/public/css/style.css\")",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(node server.js)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/manuals)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/admin)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/api/auth/me)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/login)",
+      "Bash(curl -s http://localhost:3000/)",
+      "Bash(pkill -f \"node server.js\")",
+      "PowerShell(Get-NetTCPConnection *)",
+      "PowerShell(Stop-Process *)",
+      "PowerShell(npm run *)",
+      "Bash(node -e \"const XLSX = require\\('xlsx'\\); console.log\\('xlsx ok, version:', XLSX.version\\);\")",
+      "Bash(node -e \"require\\('./routes/subjects'\\); console.log\\('subjects route ok'\\);\")",
+      "Bash(Start-Process *)",
+      "PowerShell(Start-Process \"http://localhost:3000\")",
+      "Bash(npx kill-port *)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(Start-Process \"http://localhost:3000/manuals\")"
     ]
   }
 }

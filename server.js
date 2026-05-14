@@ -26,7 +26,15 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ---- Static ------------------------------------------------------------
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve React build output (production) or fall back to legacy public/ (uploads etc.)
+const reactDist = path.join(__dirname, 'client', 'dist');
+const legacyPublic = path.join(__dirname, 'public');
+
+if (fs.existsSync(reactDist)) {
+  app.use(express.static(reactDist));
+}
+// Always serve /uploads and /images from the legacy public folder
+app.use(express.static(legacyPublic));
 
 // ---- API Routes --------------------------------------------------------
 app.use('/api/auth',     require('./routes/auth')(db));
@@ -35,23 +43,14 @@ app.use('/api/admin',    require('./routes/admin')(db));
 app.use('/api/subjects', require('./routes/subjects')(db));
 app.use('/api/notes',    require('./routes/notes')(db));
 
-// ---- Page routes (clean URLs) -----------------------------------------
-const pages = [
-  ['/',        'index.html'],
-  ['/manuals', 'manuals.html'],
-  ['/notes',   'notes.html'],
-  ['/about',   'about.html'],
-  ['/login',   'login.html'],
-  ['/admin',   'admin.html']
-];
-pages.forEach(([url, file]) =>
-  app.get(url, (req, res) => res.sendFile(path.join(__dirname, 'public', file)))
-);
-
-// ---- 404 ---------------------------------------------------------------
+// ---- SPA fallback (React Router handles all non-API routes) -----------
 app.use((req, res) => {
   if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'API endpoint not found' });
-  res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+  const reactIndex = path.join(reactDist, 'index.html');
+  if (fs.existsSync(reactIndex)) {
+    return res.sendFile(reactIndex);
+  }
+  res.status(404).sendFile(path.join(legacyPublic, '404.html'));
 });
 
 // ---- Error handler -----------------------------------------------------

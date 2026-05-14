@@ -208,7 +208,10 @@
       <section class="admin-section" id="section-subjects">
         <div class="section-bar">
           <h2>Manage Subjects</h2>
-          <button class="btn btn-primary" id="btnAddSubject">+ Add Subject</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-secondary" id="btnImportSubjects">Import Excel</button>
+            <button class="btn btn-primary" id="btnAddSubject">+ Add Subject</button>
+          </div>
         </div>
         <div class="alert alert-info">Select a department, then a semester to view and manage its subjects.</div>
         <div id="subjectsContainer">
@@ -395,6 +398,43 @@
           <button type="submit" class="btn btn-primary" id="manualSubmitBtn">Upload Manual</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ===== Subject import modal ===== -->
+  <div class="modal-overlay" id="subjectImportModal">
+    <div class="modal" style="max-width:540px;">
+      <div class="modal-header">
+        <h3>Import Subjects from Excel</h3>
+        <button class="modal-close" onclick="closeModal('subjectImportModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info" style="margin-bottom:14px;">
+          Upload an <strong>.xlsx</strong>, <strong>.xls</strong>, or <strong>.csv</strong> file.
+          Required columns: <code>Semester</code>, <code>Name</code>.
+          Optional: <code>Code</code>, <code>Description</code>.<br>
+          Semester can be <em>"1st Semester"</em>, <em>"1st"</em>, or just <em>"1"</em>.
+          Duplicate subjects are skipped automatically.
+        </div>
+        <div class="form-group">
+          <label>Department *</label>
+          <select id="importSubjectDepartment" required></select>
+        </div>
+        <div class="form-group">
+          <label>Excel / CSV File *</label>
+          <input type="file" id="importSubjectFile" accept=".xlsx,.xls,.csv" />
+        </div>
+        <div style="margin-bottom:10px;">
+          <a href="/api/subjects/import/template" class="btn btn-ghost btn-sm" download>
+            Download Template
+          </a>
+        </div>
+        <div id="importSubjectResult" style="display:none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('subjectImportModal')">Close</button>
+        <button type="button" class="btn btn-primary" id="btnDoImportSubjects">Import</button>
+      </div>
     </div>
   </div>
 
