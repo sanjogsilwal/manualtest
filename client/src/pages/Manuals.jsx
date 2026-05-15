@@ -4,7 +4,7 @@ import { formatDate, formatBytes, fileIcon, deptLabel, setDeptLabel } from '../u
 import Spinner from '../components/Spinner';
 import PdfViewer from '../components/PdfViewer';
 
-const SEMESTERS = ['1st Semester','2nd Semester','3rd Semester','4th Semester','5th Semester','6th Semester','7th Semester','8th Semester'];
+const SEMESTERS = ['1st Semester','2nd Semester','3rd Semester','4th Semester','5th Semester','6th Semester','7th Semester','8th Semester','9th Semester','10th Semester'];
 
 export default function Manuals() {
   const [searchParams] = useSearchParams();
@@ -133,7 +133,7 @@ export default function Manuals() {
             >
               <option value="">All Subjects</option>
               {visibleSubjects.map(s => (
-                <option key={s.id} value={s.id}>{s.name} — {s.semester}</option>
+                <option key={s.id} value={s.id}>{s.name} - {s.semester}</option>
               ))}
             </select>
             <select
@@ -196,7 +196,7 @@ function ManualCard({ m, onView }) {
           {(m.description || '').length > 150 ? '…' : ''}
         </p>
         <div className="manual-meta-row">
-          <span className="manual-tag">{deptLabel(m.department) || '—'}</span>
+          <span className="manual-tag">{deptLabel(m.department) || '-'}</span>
           {m.subject_name && <span className="manual-tag">{m.subject_name}</span>}
           <span className="manual-tag">{(m.file_type || '').toUpperCase()}</span>
           <span className="manual-tag">{formatBytes(m.file_size)}</span>

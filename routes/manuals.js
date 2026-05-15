@@ -210,6 +210,8 @@ module.exports = (db) => {
     const { title, description, subject, subject_id, semester, department, category_id, is_public } = req.body;
     const manual = db.prepare('SELECT * FROM manuals WHERE id = ?').get(req.params.id);
     if (!manual) return res.status(404).json({ error: 'Manual not found' });
+    if (req.admin.role === 'teacher' && manual.uploaded_by !== req.admin.id)
+      return res.status(403).json({ error: 'You can only edit manuals you uploaded' });
 
     db.prepare(`
       UPDATE manuals
@@ -246,6 +248,8 @@ module.exports = (db) => {
     const { is_public } = req.body;
     const manual = db.prepare('SELECT * FROM manuals WHERE id = ?').get(req.params.id);
     if (!manual) return res.status(404).json({ error: 'Manual not found' });
+    if (req.admin.role === 'teacher' && manual.uploaded_by !== req.admin.id)
+      return res.status(403).json({ error: 'You can only change visibility of manuals you uploaded' });
 
     const newVal = toBoolInt(is_public, manual.is_public);
     db.prepare('UPDATE manuals SET is_public = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
@@ -261,6 +265,8 @@ module.exports = (db) => {
   router.delete('/:id', authenticate, requireContentManager, (req, res) => {
     const manual = db.prepare('SELECT * FROM manuals WHERE id = ?').get(req.params.id);
     if (!manual) return res.status(404).json({ error: 'Manual not found' });
+    if (req.admin.role === 'teacher' && manual.uploaded_by !== req.admin.id)
+      return res.status(403).json({ error: 'You can only delete manuals you uploaded' });
 
     const filePath = path.join(UPLOAD_DIR, manual.file_name);
     if (fs.existsSync(filePath)) {

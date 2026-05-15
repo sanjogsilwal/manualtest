@@ -79,7 +79,7 @@ export default function Login() {
         </div>
 
         <div style={{ marginTop: 22, padding: 14, background: '#fff8e1', borderRadius: 6, fontSize: 12, color: '#874d00', borderLeft: '3px solid var(--warning)' }}>
-          <strong>Note:</strong> Accounts (teacher / admin / super admin) are created by the main admins (Sanjog Silwal &amp; Dipendra Kafle). Students do not need an account — they can browse and submit notes anonymously.
+          <strong>Note:</strong> Accounts (teacher / admin / super admin) are created by the main admins (Sanjog Silwal &amp; Dipendra Kafle). Students do not need an account - they can browse and submit notes anonymously.
         </div>
       </div>
     </div>

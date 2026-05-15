@@ -4,7 +4,7 @@ import { useScope } from '../contexts/ScopeContext';
 import { formatDate, formatBytes, fileIcon, deptLabel, setDeptLabel } from '../utils/helpers';
 import Spinner from '../components/Spinner';
 
-const SEMESTERS = ['1st Semester','2nd Semester','3rd Semester','4th Semester','5th Semester','6th Semester','7th Semester','8th Semester'];
+const SEMESTERS = ['1st Semester','2nd Semester','3rd Semester','4th Semester','5th Semester','6th Semester','7th Semester','8th Semester','9th Semester','10th Semester'];
 
 export default function Notes() {
   const { scope } = useScope();
@@ -32,7 +32,7 @@ export default function Notes() {
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
-      // Element may not be in DOM yet — retry after render
+      // Element may not be in DOM yet - retry after render
       const t = setTimeout(() => {
         document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 150);
@@ -160,7 +160,7 @@ export default function Notes() {
             <select value={subjectFilter} onChange={e => setSubjectFilter(e.target.value)}>
               <option value="">All Subjects</option>
               {filteredScopeSubjects.map(s => (
-                <option key={s.id} value={s.id}>{s.name} — {s.semester}</option>
+                <option key={s.id} value={s.id}>{s.name} - {s.semester}</option>
               ))}
             </select>
             <select value={semesterFilter} onChange={e => setSemesterFilter(e.target.value)}>
@@ -208,7 +208,7 @@ export default function Notes() {
                 <form onSubmit={handleSubmit} encType="multipart/form-data">
                   <div className="form-group">
                     <label>Note Title *</label>
-                    <input type="text" required placeholder="e.g. Thermodynamics Unit 3 — summary notes"
+                    <input type="text" required placeholder="e.g. Thermodynamics Unit 3 - summary notes"
                       value={formData.title} onChange={e => setFormData(f => ({ ...f, title: e.target.value }))} />
                   </div>
                   <div className="form-group">
@@ -221,7 +221,7 @@ export default function Notes() {
                       <label>Department *</label>
                       <select required value={formData.department}
                         onChange={e => setFormData(f => ({ ...f, department: e.target.value, subject_id: '' }))}>
-                        <option value="">— Select —</option>
+                        <option value="">- Select -</option>
                         {noteDepts.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
                       </select>
                     </div>
@@ -229,7 +229,7 @@ export default function Notes() {
                       <label>Semester *</label>
                       <select required value={formData.semester}
                         onChange={e => setFormData(f => ({ ...f, semester: e.target.value, subject_id: '' }))}>
-                        <option value="">— Select —</option>
+                        <option value="">- Select -</option>
                         {SEMESTERS.map(s => <option key={s}>{s}</option>)}
                       </select>
                     </div>
@@ -238,12 +238,12 @@ export default function Notes() {
                       <select value={formData.subject_id}
                         onChange={e => setFormData(f => ({ ...f, subject_id: e.target.value }))}>
                         {filteredFormSubjects.length === 0 && (formData.department || formData.semester) ? (
-                          <option value="">— No subjects for this department / semester —</option>
+                          <option value="">- No subjects for this department / semester -</option>
                         ) : (
                           <>
-                            <option value="">— Select —</option>
+                            <option value="">- Select -</option>
                             {filteredFormSubjects.map(s => (
-                              <option key={s.id} value={s.id}>{s.name} — {s.semester}</option>
+                              <option key={s.id} value={s.id}>{s.name} - {s.semester}</option>
                             ))}
                           </>
                         )}
@@ -263,7 +263,7 @@ export default function Notes() {
                     </div>
                   </div>
                   <div className="form-group">
-                    <label>File * <small>(PDF, DOC, DOCX, PPT, ZIP — max 50 MB)</small></label>
+                    <label>File * <small>(PDF, DOC, DOCX, PPT, ZIP - max 50 MB)</small></label>
                     <input type="file" required accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.txt"
                       onChange={e => setFormFile(e.target.files[0])} />
                   </div>

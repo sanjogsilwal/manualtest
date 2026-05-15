@@ -4,7 +4,8 @@ import { useScope } from '../contexts/ScopeContext';
 
 const SEMESTERS = [
   '1st Semester','2nd Semester','3rd Semester','4th Semester',
-  '5th Semester','6th Semester','7th Semester','8th Semester'
+  '5th Semester','6th Semester','7th Semester','8th Semester',
+  '9th Semester','10th Semester'
 ];
 
 export default function Header() {
@@ -44,8 +45,8 @@ export default function Header() {
             />
             <div className="brand-text">
               <span className="uni">Tribhuvan University</span>
-              <h1>Department of Automobile And Mechanical Engineering</h1>
-              <span className="campus">Thapathali Campus</span>
+              <h1>IOE, Thapathali Campus</h1>
+              <span className="campus"></span>
             </div>
           </Link>
           <div className="accreditation">

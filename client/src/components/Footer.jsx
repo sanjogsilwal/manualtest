@@ -14,9 +14,12 @@ export default function Footer() {
                 style={{ width: 40, height: 40 }}
                 onError={e => { e.target.outerHTML = '<div class="brand-logo placeholder" style="width:40px;height:40px;font-size:14px;">TU</div>'; }}
               />
-              <h4>Department of Automobile<br />And Mechanical Engineering</h4>
+              <div className="brand-text">
+                <span className="uni">Tribhuvan University</span>
+                <h1>IOE, Thapathali Campus</h1>
+              </div>
             </div>
-            <p>This department fosters excellence in teaching, research, and innovation, preparing students for successful careers in applied sciences.</p>
+            <p>LearnSpace</p>
           </div>
           <div className="footer-col">
             <h4>Quick Access</h4>
@@ -46,7 +49,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="footer-bottom">
-          <span>© {new Date().getFullYear()} Thapathali Campus — Department of Automobile And Mechanical Engineering</span>
+          <span>© {new Date().getFullYear()} Thapathali Campus - Department of Automobile And Mechanical Engineering</span>
           <span className="footer-status"><span className="dot"></span>System Online</span>
         </div>
       </div>

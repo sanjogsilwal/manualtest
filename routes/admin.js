@@ -2,8 +2,10 @@
 // login audit log, and user management.
 //
 // Roles allowed in the system: super_admin, admin, teacher.
-// (Students do not have accounts — they use the site anonymously.)
-// Only super_admin can create/edit/delete users (admins/teachers).
+// Hierarchy:
+//   super_admin → creates/manages admins (and teachers); full access
+//   admin       → creates/manages teachers only; no department management
+//   teacher     → content management (manuals, notes, subjects); read-only on users
 
 const express = require('express');
 const bcrypt  = require('bcryptjs');
@@ -15,6 +17,22 @@ const VALID_ROLES = ['super_admin', 'admin', 'teacher'];
 
 module.exports = (db) => {
   const router = express.Router();
+
+  // Ensure created_by column exists (safe to run on every boot).
+  try {
+    const cols = db.prepare('PRAGMA table_info(admins)').all();
+    if (!cols.find(c => c.name === 'created_by')) {
+      db.exec('ALTER TABLE admins ADD COLUMN created_by INTEGER REFERENCES admins(id) ON DELETE SET NULL');
+    }
+  } catch (_) {}
+
+  // Inline middleware: admin or super_admin only.
+  function requireAdminOrAbove(req, res, next) {
+    const r = req.admin?.role;
+    if (r !== 'super_admin' && r !== 'admin')
+      return res.status(403).json({ error: 'Admin access required' });
+    next();
+  }
 
   // ===== Categories =====================================================
 
@@ -29,7 +47,7 @@ module.exports = (db) => {
     res.json({ categories });
   });
 
-  router.post('/categories', authenticate, requireContentManager, (req, res) => {
+  router.post('/categories', authenticate, requireAdminOrAbove, (req, res) => {
     const { name, description } = req.body;
     if (!name) return res.status(400).json({ error: 'Name is required' });
     try {
@@ -43,7 +61,7 @@ module.exports = (db) => {
     }
   });
 
-  router.put('/categories/:id', authenticate, requireContentManager, (req, res) => {
+  router.put('/categories/:id', authenticate, requireAdminOrAbove, (req, res) => {
     const { name, description } = req.body;
     const cat = db.prepare('SELECT * FROM categories WHERE id = ?').get(req.params.id);
     if (!cat) return res.status(404).json({ error: 'Category not found' });
@@ -52,7 +70,7 @@ module.exports = (db) => {
     res.json({ success: true });
   });
 
-  router.delete('/categories/:id', authenticate, requireContentManager, (req, res) => {
+  router.delete('/categories/:id', authenticate, requireAdminOrAbove, (req, res) => {
     const cat = db.prepare('SELECT * FROM categories WHERE id = ?').get(req.params.id);
     if (!cat) return res.status(404).json({ error: 'Category not found' });
     db.prepare('DELETE FROM categories WHERE id = ?').run(req.params.id);
@@ -107,13 +125,38 @@ module.exports = (db) => {
   router.delete('/departments/:id', authenticate, requireSuperAdmin, (req, res) => {
     const dept = db.prepare('SELECT * FROM departments WHERE id = ?').get(req.params.id);
     if (!dept) return res.status(404).json({ error: 'Department not found' });
-    const linked = db.prepare('SELECT COUNT(*) AS c FROM subjects WHERE department = ?').get(dept.code).c;
-    if (linked > 0)
-      return res.status(400).json({ error: `Cannot delete: ${linked} subject(s) still belong to this department` });
-    db.prepare('DELETE FROM departments WHERE id = ?').run(req.params.id);
-    db.prepare('INSERT INTO activity_log (admin_id, action, details) VALUES (?, ?, ?)')
-      .run(req.admin.id, 'DEPT_DELETE', `Deleted department: ${dept.name}`);
-    res.json({ success: true });
+
+    const deleteDept = db.transaction(() => {
+      // Find subjects in this dept that already have a duplicate in 'both' (same name+semester).
+      // For those, remap manuals/notes to the existing 'both' subject, then delete the duplicate.
+      const conflicts = db.prepare(`
+        SELECT s.id AS src_id, b.id AS dst_id
+        FROM subjects s
+        JOIN subjects b ON b.name = s.name AND b.semester = s.semester AND b.department = 'both'
+        WHERE s.department = ?
+      `).all(dept.code);
+
+      for (const { src_id, dst_id } of conflicts) {
+        db.prepare("UPDATE manuals       SET subject_id = ? WHERE subject_id = ?").run(dst_id, src_id);
+        db.prepare("UPDATE student_notes SET subject_id = ? WHERE subject_id = ?").run(dst_id, src_id);
+        db.prepare("DELETE FROM subjects WHERE id = ?").run(src_id);
+      }
+
+      // Move remaining subjects (no conflict) to 'both'.
+      const subjectsMoved = db.prepare("UPDATE subjects SET department = 'both' WHERE department = ?").run(dept.code).changes;
+      const manualsMoved  = db.prepare("UPDATE manuals SET department = 'both' WHERE department = ?").run(dept.code).changes;
+      const notesMoved    = db.prepare("UPDATE student_notes SET department = 'both' WHERE department = ?").run(dept.code).changes;
+
+      db.prepare('DELETE FROM departments WHERE id = ?').run(req.params.id);
+      db.prepare('INSERT INTO activity_log (admin_id, action, details) VALUES (?, ?, ?)')
+        .run(req.admin.id, 'DEPT_DELETE',
+          `Deleted department: ${dept.name} (${subjectsMoved} subjects, ${manualsMoved} manuals, ${notesMoved} notes moved to All Departments)`);
+
+      return { subjectsMoved, manualsMoved, notesMoved };
+    });
+
+    const result = deleteDept();
+    res.json({ success: true, ...result });
   });
 
   // ===== Dashboard ======================================================
@@ -164,30 +207,37 @@ module.exports = (db) => {
     res.json({ users: db.prepare(sql).all(...params) });
   });
 
-  router.post('/users', authenticate, requireSuperAdmin, (req, res) => {
+  router.post('/users', authenticate, requireAdminOrAbove, (req, res) => {
+    const requestorRole = req.admin.role;
     const { username, email, password, full_name, role, department } = req.body;
     if (!username || !email || !password || !full_name)
       return res.status(400).json({ error: 'Username, email, full name and password are required' });
     if (password.length < 6)
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
-    if (role && !VALID_ROLES.includes(role))
-      return res.status(400).json({ error: 'Invalid role (must be super_admin, admin, or teacher)' });
+
+    // Admins can only create teachers; super_admin can create any role.
+    let targetRole = role || (requestorRole === 'admin' ? 'teacher' : 'admin');
+    if (requestorRole === 'admin' && targetRole !== 'teacher')
+      return res.status(403).json({ error: 'Admins can only create teacher accounts' });
+    if (!VALID_ROLES.includes(targetRole))
+      return res.status(400).json({ error: 'Invalid role' });
 
     try {
       const hash = bcrypt.hashSync(password, 10);
       const result = db.prepare(`
-        INSERT INTO admins (username, email, password_hash, full_name, role, department)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO admins (username, email, password_hash, full_name, role, department, created_by)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
       `).run(
         username.trim(),
         email.trim().toLowerCase(),
         hash,
         full_name.trim(),
-        role || 'admin',
-        department || null
+        targetRole,
+        department || null,
+        req.admin.id
       );
       db.prepare('INSERT INTO activity_log (admin_id, action, details) VALUES (?, ?, ?)')
-        .run(req.admin.id, 'USER_CREATE', `Created ${role || 'admin'}: ${username}`);
+        .run(req.admin.id, 'USER_CREATE', `Created ${targetRole}: ${username}`);
       res.json({ success: true, id: result.lastInsertRowid });
     } catch (err) {
       if (String(err.message).includes('UNIQUE'))
@@ -196,12 +246,22 @@ module.exports = (db) => {
     }
   });
 
-  router.put('/users/:id', authenticate, requireSuperAdmin, (req, res) => {
+  router.put('/users/:id', authenticate, requireAdminOrAbove, (req, res) => {
+    const requestorRole = req.admin.role;
     const target = db.prepare('SELECT * FROM admins WHERE id = ?').get(req.params.id);
     if (!target) return res.status(404).json({ error: 'User not found' });
+
+    // Admins can only edit teachers; cannot change a teacher's role.
+    if (requestorRole === 'admin') {
+      if (target.role !== 'teacher')
+        return res.status(403).json({ error: 'Admins can only edit teacher accounts' });
+    }
+
     const { full_name, email, role, department, is_active, password } = req.body;
     if (role && !VALID_ROLES.includes(role))
       return res.status(400).json({ error: 'Invalid role' });
+    // Admins cannot change a teacher's role.
+    const newRole = (requestorRole === 'admin') ? null : (role ?? null);
 
     db.prepare(`
       UPDATE admins
@@ -214,7 +274,7 @@ module.exports = (db) => {
     `).run(
       full_name ?? null,
       email ?? null,
-      role ?? null,
+      newRole,
       department ?? null,
       is_active === undefined ? null : (is_active ? 1 : 0),
       req.params.id
@@ -229,14 +289,20 @@ module.exports = (db) => {
     res.json({ success: true });
   });
 
-  router.delete('/users/:id', authenticate, requireSuperAdmin, (req, res) => {
+  router.delete('/users/:id', authenticate, requireAdminOrAbove, (req, res) => {
+    const requestorRole = req.admin.role;
     if (parseInt(req.params.id) === req.admin.id)
       return res.status(400).json({ error: 'You cannot delete your own account' });
     const target = db.prepare('SELECT * FROM admins WHERE id = ?').get(req.params.id);
     if (!target) return res.status(404).json({ error: 'User not found' });
+
+    // Admins can only delete teachers.
+    if (requestorRole === 'admin' && target.role !== 'teacher')
+      return res.status(403).json({ error: 'Admins can only remove teacher accounts' });
+
     db.prepare('DELETE FROM admins WHERE id = ?').run(req.params.id);
     db.prepare('INSERT INTO activity_log (admin_id, action, details) VALUES (?, ?, ?)')
-      .run(req.admin.id, 'USER_DELETE', `Removed user: ${target.username}`);
+      .run(req.admin.id, 'USER_DELETE', `Removed user: ${target.username} (${target.role})`);
     res.json({ success: true });
   });
 

@@ -5,7 +5,7 @@ import Spinner from '../../components/Spinner';
 import PdfViewer from '../../components/PdfViewer';
 import { formatDate, formatBytes, deptLabel, setDeptLabel } from '../../utils/helpers';
 
-const SEMESTERS = ['1st Semester','2nd Semester','3rd Semester','4th Semester','5th Semester','6th Semester','7th Semester','8th Semester'];
+const SEMESTERS = ['1st Semester','2nd Semester','3rd Semester','4th Semester','5th Semester','6th Semester','7th Semester','8th Semester','9th Semester','10th Semester'];
 const SEM_ORDER = SEMESTERS;
 
 function xhrUpload(url, formData, onProgress) {
@@ -104,6 +104,8 @@ export default function Admin() {
   if (!currentUser) return <div style={{ padding: 40, textAlign: 'center' }}><div className="spinner"></div></div>;
 
   const isSuperAdmin = currentUser.role === 'super_admin';
+  const isAdmin      = currentUser.role === 'admin';
+  const isTeacher    = currentUser.role === 'teacher';
 
   return (
     <>
@@ -163,9 +165,9 @@ export default function Admin() {
               ['manuals', 'Upload'],
               ...(isSuperAdmin ? [['departments', 'Departments']] : []),
               ['subjects', 'Subjects'],
-              ['categories', 'Categories'],
+              ...(!isTeacher ? [['categories', 'Categories']] : []),
               ['notes', 'Student Notes'],
-              ...(isSuperAdmin ? [['users', 'Users']] : []),
+              ...(!isTeacher ? [['users', 'Members']] : []),
               ['loginlog', 'Login Log'],
               ['activity', 'Activity Log'],
               ['account', 'My Account'],
@@ -216,7 +218,7 @@ export default function Admin() {
               reloadSubjects={loadAllSubjects}
             />
           )}
-          {activeSection === 'categories' && (
+          {activeSection === 'categories' && !isTeacher && (
             <CategoriesSection
               showAlert={showAlert}
               allCategories={allCategories}
@@ -226,7 +228,7 @@ export default function Admin() {
           {activeSection === 'notes' && (
             <NotesSection showAlert={showAlert} allDepartments={allDepartments} />
           )}
-          {activeSection === 'users' && isSuperAdmin && (
+          {activeSection === 'users' && !isTeacher && (
             <UsersSection
               showAlert={showAlert}
               allDepartments={allDepartments}
@@ -287,7 +289,7 @@ function DashboardSection({ showAlert }) {
             ) : recentActivity.map((a, i) => (
               <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid var(--border)', fontSize: 13 }}>
                 <strong>{a.full_name || 'System'}</strong>
-                <span style={{ color: 'var(--text-muted)' }}>— {a.action}</span><br />
+                <span style={{ color: 'var(--text-muted)' }}>- {a.action}</span><br />
                 <small style={{ color: 'var(--text-light)' }}>{a.details || ''} • {formatDate(a.created_at)}</small>
               </div>
             ))}
@@ -410,20 +412,28 @@ function ManualsSection({ showAlert, allCategories, allSubjects, allDepartments,
                   <strong>{m.title}</strong>
                   {m.description && <><br /><small style={{ color: 'var(--text-muted)' }}>{(m.description || '').slice(0, 80)}{m.description.length > 80 ? '…' : ''}</small></>}
                 </td>
-                <td><span className="badge">{deptLabel(m.department) || '—'}</span></td>
-                <td>{m.semester || '—'}</td>
-                <td>{m.subject_name || m.subject || '—'}</td>
+                <td><span className="badge">{deptLabel(m.department) || '-'}</span></td>
+                <td>{m.semester || '-'}</td>
+                <td>{m.subject_name || m.subject || '-'}</td>
                 <td><span style={{ color: 'var(--text-muted)', fontSize: 12 }}>{(m.file_type || '').toUpperCase()}<br />{formatBytes(m.file_size)}</span></td>
                 <td><strong>{m.download_count}</strong></td>
                 <td>
-                  <label className="toggle">
-                    <input type="checkbox" checked={!!m.is_public}
-                      onChange={e => handleToggleVisibility(m.id, e.target.checked)} />
-                    <span className="slider"></span>
-                  </label>
-                  <div style={{ fontSize: 11, marginTop: 4, color: m.is_public ? 'var(--success)' : 'var(--warning)' }}>
-                    {m.is_public ? 'PUBLIC' : 'PRIVATE'}
-                  </div>
+                  {(currentUser.role !== 'teacher' || m.uploaded_by === currentUser.id) ? (
+                    <>
+                      <label className="toggle">
+                        <input type="checkbox" checked={!!m.is_public}
+                          onChange={e => handleToggleVisibility(m.id, e.target.checked)} />
+                        <span className="slider"></span>
+                      </label>
+                      <div style={{ fontSize: 11, marginTop: 4, color: m.is_public ? 'var(--success)' : 'var(--warning)' }}>
+                        {m.is_public ? 'PUBLIC' : 'PRIVATE'}
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ fontSize: 11, color: m.is_public ? 'var(--success)' : 'var(--warning)' }}>
+                      {m.is_public ? 'PUBLIC' : 'PRIVATE'}
+                    </div>
+                  )}
                 </td>
                 <td>
                   {m.file_type === 'pdf' && (
@@ -433,10 +443,14 @@ function ManualsSection({ showAlert, allCategories, allSubjects, allDepartments,
                     </>
                   )}
                   <a href={`/api/manuals/${m.id}/download`} className="btn btn-ghost btn-sm">Download</a>
-                  {' '}
-                  <button className="btn btn-secondary btn-sm" onClick={() => openEdit(m.id)}>Edit</button>
-                  {' '}
-                  <button className="btn btn-danger btn-sm" onClick={() => handleDelete(m.id, m.title)}>Delete</button>
+                  {(currentUser.role !== 'teacher' || m.uploaded_by === currentUser.id) && (
+                    <>
+                      {' '}
+                      <button className="btn btn-secondary btn-sm" onClick={() => openEdit(m.id)}>Edit</button>
+                      {' '}
+                      <button className="btn btn-danger btn-sm" onClick={() => handleDelete(m.id, m.title)}>Delete</button>
+                    </>
+                  )}
                 </td>
               </tr>
             ))}
@@ -566,7 +580,7 @@ function ManualModal({ isOpen, manual, allCategories, allSubjects, allDepartment
       showAlert('success', `${fileItems.length} file${fileItems.length > 1 ? 's' : ''} uploaded successfully`);
       setTimeout(onDone, 900);
     } else {
-      showAlert('error', 'Some files failed — see details below');
+      showAlert('error', 'Some files failed - see details below');
     }
   }
 
@@ -587,7 +601,7 @@ function ManualModal({ isOpen, manual, allCategories, allSubjects, allDepartment
       }
     >
       <form id="manualForm" onSubmit={handleSubmit}>
-        {/* Title — shown for both create and edit */}
+        {/* Title - shown for both create and edit */}
         <div className="form-group"><label>Title *</label>
           <input
             type="text"
@@ -610,21 +624,21 @@ function ManualModal({ isOpen, manual, allCategories, allSubjects, allDepartment
         <div className="form-row-3">
           <div className="form-group"><label>Department *</label>
             <select required value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value, subject_id: '' }))}>
-              <option value="">— Select —</option>
+              <option value="">- Select -</option>
               {allDepartments.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
             </select>
           </div>
           <div className="form-group"><label>Semester</label>
             <select value={form.semester} onChange={e => setForm(f => ({ ...f, semester: e.target.value, subject_id: '' }))}>
-              <option value="">— Select —</option>
+              <option value="">- Select -</option>
               {SEMESTERS.map(s => <option key={s}>{s}</option>)}
             </select>
           </div>
           <div className="form-group"><label>Subject</label>
             <select value={form.subject_id} onChange={e => setForm(f => ({ ...f, subject_id: e.target.value }))}>
-              <option value="">— Select —</option>
+              <option value="">- Select -</option>
               {filteredSubjects().map(s => (
-                <option key={s.id} value={s.id}>{s.name} — {s.semester} ({deptLabel(s.department)})</option>
+                <option key={s.id} value={s.id}>{s.name} - {s.semester} ({deptLabel(s.department)})</option>
               ))}
             </select>
           </div>
@@ -635,7 +649,7 @@ function ManualModal({ isOpen, manual, allCategories, allSubjects, allDepartment
           </div>
           <div className="form-group"><label>Category</label>
             <select value={form.category_id} onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))}>
-              <option value="">— Uncategorized —</option>
+              <option value="">- Uncategorized -</option>
               {allCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
@@ -643,7 +657,7 @@ function ManualModal({ isOpen, manual, allCategories, allSubjects, allDepartment
 
         {!manual && (
           <div className="form-group">
-            <label>Files * <small>(PDF, DOC, DOCX, PPT, ZIP — max 50 MB each — select multiple)</small></label>
+            <label>Files * <small>(PDF, DOC, DOCX, PPT, ZIP - max 50 MB each - select multiple)</small></label>
             <input
               ref={fileInputRef}
               type="file"
@@ -709,7 +723,7 @@ function ManualModal({ isOpen, manual, allCategories, allSubjects, allDepartment
         <div className="form-checkbox">
           <input type="checkbox" id="manualIsPublic" checked={form.is_public}
             onChange={e => setForm(f => ({ ...f, is_public: e.target.checked }))} />
-          <label htmlFor="manualIsPublic">Public — visible to all visitors (uncheck to make Private)</label>
+          <label htmlFor="manualIsPublic">Public - visible to all visitors (uncheck to make Private)</label>
         </div>
       </form>
     </Modal>
@@ -757,7 +771,7 @@ function DepartmentsSection({ showAlert, allDepartments, reloadDepartments, curr
               <tr key={d.id}>
                 <td><strong>{d.name}</strong></td>
                 <td><code>{d.code}</code></td>
-                <td>{d.description || '—'}</td>
+                <td>{d.description || '-'}</td>
                 <td>{d.subject_count}</td>
                 <td>{formatDate(d.created_at)}</td>
                 <td>
@@ -900,7 +914,7 @@ function SubjectsSection({ showAlert, allSubjects, allDepartments, reloadSubject
         </div>
         <div className="subjects-col subjects-col-main">
           <div className="subjects-col-header">
-            {semSel ? `Subjects — ${semSel} (${list.length})` : 'Subjects'}
+            {semSel ? `Subjects - ${semSel} (${list.length})` : 'Subjects'}
           </div>
           <div className="subjects-col-body">
             {!deptSel || !semSel ? (
@@ -915,7 +929,7 @@ function SubjectsSection({ showAlert, allSubjects, allDepartments, reloadSubject
                     {list.map(s => (
                       <tr key={s.id}>
                         <td><strong>{s.name}</strong></td>
-                        <td>{s.code || '—'}</td>
+                        <td>{s.code || '-'}</td>
                         <td>{s.manual_count}</td>
                         <td>{s.notes_count}</td>
                         <td>
@@ -1008,18 +1022,19 @@ function SubjectImportModal({ isOpen, allDepartments, onClose, onImported, showA
     >
       <div className="alert alert-info" style={{ marginBottom: 14 }}>
         Upload an <strong>.xlsx</strong>, <strong>.xls</strong>, or <strong>.csv</strong> file with these columns:<br />
-        <code>Year</code> — 1, 2, 3, or 4<br />
-        <code>Part</code> — I or II<br />
-        <code>Subject Code</code> — e.g. ME 501 (optional)<br />
-        <code>Subject Name</code> — required<br />
+        <code>Year</code> - 1 through 5<br />
+        <code>Part</code> - I or II<br />
+        <code>Subject Code</code> - e.g. ME 501 (optional)<br />
+        <code>Subject Name</code> - required<br />
         <br />
-        Year 1 Part I → 1st Sem, Year 1 Part II → 2nd Sem, Year 2 Part I → 3rd Sem … and so on.
+        Year 1 Part I → 1st Sem, Year 1 Part II → 2nd Sem … Year 5 Part II → 10th Sem.
+        You can also use a <code>Semester</code> column (1–10) instead of Year+Part.
         Duplicates are skipped automatically.
       </div>
       <div className="form-group">
         <label>Department *</label>
         <select required value={department} onChange={e => setDepartment(e.target.value)}>
-          <option value="" disabled>— Select —</option>
+          <option value="" disabled>- Select -</option>
           {depts.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
         </select>
       </div>
@@ -1097,13 +1112,13 @@ function SubjectModal({ isOpen, subject, allDepartments, onClose, onSave }) {
         <div className="form-row">
           <div className="form-group"><label>Department *</label>
             <select required value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))}>
-              <option value="">— Select —</option>
+              <option value="">- Select -</option>
               {allDepartments.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
             </select>
           </div>
           <div className="form-group"><label>Semester *</label>
             <select required value={form.semester} onChange={e => setForm(f => ({ ...f, semester: e.target.value }))}>
-              <option value="">— Select —</option>
+              <option value="">- Select -</option>
               {SEMESTERS.map(s => <option key={s}>{s}</option>)}
             </select>
           </div>
@@ -1155,7 +1170,7 @@ function CategoriesSection({ showAlert, allCategories, reloadCategories }) {
             ) : allCategories.map(c => (
               <tr key={c.id}>
                 <td><strong>{c.name}</strong></td>
-                <td>{c.description || '—'}</td>
+                <td>{c.description || '-'}</td>
                 <td>{c.manual_count}</td>
                 <td>
                   <button className="btn btn-secondary btn-sm" onClick={() => setModal({ open: true, cat: c })}>Edit</button>
@@ -1265,7 +1280,7 @@ function NotesSection({ showAlert, allDepartments }) {
                 <td>{n.submitted_by}<br /><small style={{ color: 'var(--text-muted)' }}>{n.submitted_email || ''}</small></td>
                 <td><span className="badge">{deptLabel(n.department)}</span></td>
                 <td>{n.semester}</td>
-                <td>{n.subject_name || n.subject || '—'}</td>
+                <td>{n.subject_name || n.subject || '-'}</td>
                 <td><span className={`badge badge-${n.status}`}>{n.status.toUpperCase()}</span></td>
                 <td>
                   <a href={`/api/notes/${n.id}/download`} className="btn btn-ghost btn-sm">Download</a>
@@ -1289,6 +1304,7 @@ function NotesSection({ showAlert, allDepartments }) {
 function UsersSection({ showAlert, allDepartments, currentUser }) {
   const [users, setUsers] = useState(null);
   const [modal, setModal] = useState({ open: false, user: null });
+  const isSA = currentUser.role === 'super_admin';
 
   const loadUsers = useCallback(() => {
     fetch('/api/admin/users', { credentials: 'include' })
@@ -1298,6 +1314,11 @@ function UsersSection({ showAlert, allDepartments, currentUser }) {
   }, []);
 
   useEffect(() => { loadUsers(); }, [loadUsers]);
+
+  // For admins, only show the teachers they can manage.
+  const visibleUsers = Array.isArray(users)
+    ? (isSA ? users : users.filter(u => u.role === 'teacher'))
+    : users;
 
   async function handleDelete(id, username) {
     if (!confirm(`Remove user "${username}"?`)) return;
@@ -1321,43 +1342,70 @@ function UsersSection({ showAlert, allDepartments, currentUser }) {
     else showAlert('error', d.error || 'Failed');
   }
 
+  function canEdit(u) {
+    if (u.id === currentUser.id) return false;
+    if (isSA) return true;
+    return u.role === 'teacher';
+  }
+  function canDelete(u) {
+    if (u.id === currentUser.id) return false;
+    if (isSA) return true;
+    return u.role === 'teacher';
+  }
+
   return (
     <div>
       <div className="section-bar">
-        <h2>User Management</h2>
-        <button className="btn btn-primary" onClick={() => setModal({ open: true, user: null })}>+ Add User</button>
+        <h2>{isSA ? 'User Management' : 'Teacher Management'}</h2>
+        <button className="btn btn-primary" onClick={() => setModal({ open: true, user: null })}>
+          + {isSA ? 'Add User' : 'Add Teacher'}
+        </button>
       </div>
       <div className="alert alert-info">
-        Only the main admins (<strong>Sanjog Silwal</strong> and <strong>Dipendra Kafle</strong>) can create or remove users. There is no student account in the system.
+        {isSA
+          ? 'Super admins can create and remove admins and teachers. Admins manage teacher accounts.'
+          : 'As an admin you can create, edit, and remove teacher accounts for your department.'}
       </div>
       <div className="table-wrap">
         <table>
-          <thead><tr><th>Username</th><th>Full Name</th><th>Email</th><th>Role</th><th>Department</th><th>Created</th><th>Actions</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Username</th><th>Full Name</th><th>Email</th><th>Role</th>
+              <th>Department</th><th>Created</th><th>Actions</th>
+            </tr>
+          </thead>
           <tbody>
-            {users === null ? (
+            {visibleUsers === null ? (
               <tr><td colSpan={7} style={{ textAlign: 'center', padding: 30 }}><div className="spinner"></div></td></tr>
-            ) : users === 'denied' ? (
+            ) : visibleUsers === 'denied' ? (
               <tr><td colSpan={7} style={{ padding: 30, textAlign: 'center' }}>Access denied.</td></tr>
-            ) : users.length === 0 ? (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: 30 }}>No users found.</td></tr>
-            ) : users.map(u => (
+            ) : visibleUsers.length === 0 ? (
+              <tr><td colSpan={7} style={{ textAlign: 'center', padding: 30 }}>No {isSA ? 'users' : 'teachers'} found.</td></tr>
+            ) : visibleUsers.map(u => (
               <tr key={u.id}>
                 <td><strong>{u.username}</strong></td>
                 <td>{u.full_name}</td>
                 <td>{u.email}</td>
                 <td><span className={`role-chip role-${u.role}`}>{u.role.replace('_', ' ')}</span></td>
-                <td>{deptLabel(u.department) || '—'}</td>
+                <td>{deptLabel(u.department) || '-'}</td>
                 <td>{formatDate(u.created_at)}</td>
                 <td>
-                  {currentUser.role === 'super_admin' ? (
+                  {u.id === currentUser.id ? (
+                    <small style={{ color: 'var(--text-muted)' }}>You</small>
+                  ) : (
                     <>
-                      <button className="btn btn-secondary btn-sm" onClick={() => setModal({ open: true, user: u })}>Edit</button>
+                      {canEdit(u) && (
+                        <button className="btn btn-secondary btn-sm" onClick={() => setModal({ open: true, user: u })}>Edit</button>
+                      )}
                       {' '}
-                      {u.id !== currentUser.id
-                        ? <button className="btn btn-danger btn-sm" onClick={() => handleDelete(u.id, u.username)}>Remove</button>
-                        : <small style={{ color: 'var(--text-muted)' }}>You</small>}
+                      {canDelete(u) && (
+                        <button className="btn btn-danger btn-sm" onClick={() => handleDelete(u.id, u.username)}>Remove</button>
+                      )}
+                      {!canEdit(u) && !canDelete(u) && (
+                        <small style={{ color: 'var(--text-muted)' }}>-</small>
+                      )}
                     </>
-                  ) : <small style={{ color: 'var(--text-muted)' }}>view only</small>}
+                  )}
                 </td>
               </tr>
             ))}
@@ -1365,17 +1413,21 @@ function UsersSection({ showAlert, allDepartments, currentUser }) {
         </table>
       </div>
       <UserModal isOpen={modal.open} user={modal.user} allDepartments={allDepartments}
+        currentUser={currentUser}
         onClose={() => setModal({ open: false, user: null })} onSave={handleSave} />
     </div>
   );
 }
 
-function UserModal({ isOpen, user, allDepartments, onClose, onSave }) {
-  const [form, setForm] = useState({ id: '', username: '', full_name: '', email: '', role: 'admin', department: '', password: '' });
+function UserModal({ isOpen, user, allDepartments, currentUser, onClose, onSave }) {
+  const isSA = currentUser.role === 'super_admin';
+  const defaultRole = isSA ? 'admin' : 'teacher';
+  const [form, setForm] = useState({ id: '', username: '', full_name: '', email: '', role: defaultRole, department: '', password: '' });
+
   useEffect(() => {
     setForm(user
       ? { id: user.id, username: user.username, full_name: user.full_name, email: user.email, role: user.role, department: user.department || '', password: '' }
-      : { id: '', username: '', full_name: '', email: '', role: 'admin', department: '', password: '' });
+      : { id: '', username: '', full_name: '', email: '', role: defaultRole, department: '', password: '' });
   }, [user, isOpen]);
 
   async function handleSubmit(e) {
@@ -1384,11 +1436,11 @@ function UserModal({ isOpen, user, allDepartments, onClose, onSave }) {
   }
 
   return (
-    <Modal isOpen={isOpen} title={user ? 'Edit User' : 'Add User'} onClose={onClose}
+    <Modal isOpen={isOpen} title={user ? 'Edit User' : (isSA ? 'Add User' : 'Add Teacher')} onClose={onClose}
       footer={
         <>
           <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button type="submit" form="userForm" className="btn btn-primary">Save User</button>
+          <button type="submit" form="userForm" className="btn btn-primary">Save</button>
         </>
       }
     >
@@ -1414,16 +1466,20 @@ function UserModal({ isOpen, user, allDepartments, onClose, onSave }) {
               onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
           </div>
           <div className="form-group"><label>Role *</label>
-            <select required value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))}>
-              <option value="teacher">Teacher</option>
-              <option value="admin">Admin</option>
-              <option value="super_admin">Super Admin</option>
-            </select>
+            {isSA ? (
+              <select required value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))}>
+                <option value="teacher">Teacher</option>
+                <option value="admin">Admin</option>
+                <option value="super_admin">Super Admin</option>
+              </select>
+            ) : (
+              <input type="text" value="Teacher" disabled />
+            )}
           </div>
         </div>
         <div className="form-group"><label>Department</label>
           <select value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))}>
-            <option value="">—</option>
+            <option value="">-</option>
             {allDepartments.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
           </select>
         </div>
@@ -1462,8 +1518,8 @@ function LoginLogSection({ showAlert }) {
                 <td><strong>{e.full_name || e.username}</strong><br /><small style={{ color: 'var(--text-muted)' }}>{e.username}</small></td>
                 <td><span className={`role-chip role-${e.role}`}>{(e.role || '').replace('_', ' ')}</span></td>
                 <td><span className={`badge ${e.action === 'LOGIN' ? 'badge-approved' : 'badge-pending'}`}>{e.action}</span></td>
-                <td style={{ fontSize: 12 }}>{e.ip_address || '—'}</td>
-                <td style={{ fontSize: 11, color: 'var(--text-muted)', maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.user_agent || '—'}</td>
+                <td style={{ fontSize: 12 }}>{e.ip_address || '-'}</td>
+                <td style={{ fontSize: 11, color: 'var(--text-muted)', maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.user_agent || '-'}</td>
               </tr>
             ))}
           </tbody>
@@ -1497,7 +1553,7 @@ function ActivitySection({ showAlert }) {
             ) : activities.map((a, i) => (
               <tr key={i}>
                 <td style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{formatDate(a.created_at)}</td>
-                <td>{a.full_name || a.username || '—'}</td>
+                <td>{a.full_name || a.username || '-'}</td>
                 <td><strong>{a.action}</strong></td>
                 <td style={{ fontSize: 13 }}>{a.details || ''}</td>
               </tr>

@@ -70,7 +70,7 @@ export default function Home() {
               </div>
               <div className="feature-box">
                 <h3>Submit Your Notes</h3>
-                <p>Help your peers — submit your notes for review. Approved notes are published in the public library.</p>
+                <p>Help your peers - submit your notes for review. Approved notes are published in the public library.</p>
                 <Link to="/notes#submit" className="btn btn-link">Submit Notes</Link>
               </div>
             </div>

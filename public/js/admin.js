@@ -400,11 +400,20 @@ function editDepartment(id) {
 }
 
 async function deleteDepartment(id, name) {
-  if (!confirm(`Delete department "${name}"?`)) return;
+  if (!confirm(`Delete department "${name}"?\n\nAny subjects and manuals under this department will be moved to "All Departments".`)) return;
   try {
     const res = await fetch(`/api/admin/departments/${id}`, { method: 'DELETE', credentials: 'include' });
-    if (res.ok) { showAlert('success', 'Department deleted'); await loadAllDepartments(); loadDepartments(); }
-    else { const d = await res.json(); showAlert('error', d.error || 'Failed'); }
+    const d = await res.json();
+    if (res.ok) {
+      let msg = 'Department deleted.';
+      if (d.subjectsMoved || d.manualsMoved || d.notesMoved)
+        msg += ` ${d.subjectsMoved || 0} subject(s), ${d.manualsMoved || 0} manual(s), ${d.notesMoved || 0} note(s) moved to All Departments.`;
+      showAlert('success', msg);
+      await loadAllDepartments();
+      loadDepartments();
+    } else {
+      showAlert('error', d.error || 'Failed');
+    }
   } catch (e) { showAlert('error', 'Network error'); }
 }
 
@@ -516,7 +525,8 @@ let subjectsDeptSel = '';
 let subjectsSemSel  = '';
 
 const SEM_ORDER = ['1st Semester','2nd Semester','3rd Semester','4th Semester',
-                   '5th Semester','6th Semester','7th Semester','8th Semester'];
+                   '5th Semester','6th Semester','7th Semester','8th Semester',
+                   '9th Semester','10th Semester'];
 
 async function loadSubjects() {
   try {

@@ -2,7 +2,7 @@
 //
 // A subject belongs to:
 //   - department: any department.code from the `departments` table, OR 'both'
-//   - semester:   "1st Semester" … "8th Semester"
+//   - semester:   "1st Semester" … "10th Semester"
 //
 // Subjects are returned sorted by department then semester then name so
 // callers can group them by department in the UI.
@@ -14,7 +14,8 @@ const { authenticate, requireContentManager } = require('../middleware/auth');
 
 const SEM_ORDER = [
   '1st Semester','2nd Semester','3rd Semester','4th Semester',
-  '5th Semester','6th Semester','7th Semester','8th Semester'
+  '5th Semester','6th Semester','7th Semester','8th Semester',
+  '9th Semester','10th Semester'
 ];
 
 function normalizeSemester(raw) {
@@ -30,15 +31,15 @@ function normalizeSemester(raw) {
   return null;
 }
 
-// Normalize "Year" column: "1", "1st", "1st Year", "Year 1" → integer 1-4
+// Normalize "Year" column: "1", "1st", "1st Year", "Year 1" → integer 1-5
 function normalizeYear(raw) {
   const s = String(raw).trim();
   const m1 = s.match(/^(\d+)/);
   if (m1) {
     const n = parseInt(m1[1]);
-    return n >= 1 && n <= 4 ? n : null;
+    return n >= 1 && n <= 5 ? n : null;
   }
-  const words = { first: 1, second: 2, third: 3, fourth: 4 };
+  const words = { first: 1, second: 2, third: 3, fourth: 4, fifth: 5 };
   const lower = s.toLowerCase().replace(/\s+year$/,'').trim();
   return words[lower] || null;
 }
@@ -113,6 +114,8 @@ module.exports = (db) => {
       [3, 'II', 'ME 602', 'Machine Design'],
       [4, 'I',  'ME 701', 'Industrial Engineering'],
       [4, 'II', 'ME 702', 'Project Work'],
+      [5, 'I',  'ME 801', 'Advanced Manufacturing'],
+      [5, 'II', 'ME 802', 'Final Year Project'],
     ]);
     ws['!cols'] = [{ wch: 8 }, { wch: 8 }, { wch: 16 }, { wch: 40 }];
     XLSX.utils.book_append_sheet(wb, ws, 'Subjects');
