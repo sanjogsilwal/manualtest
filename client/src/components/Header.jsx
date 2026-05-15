@@ -1,17 +1,9 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useScope } from '../contexts/ScopeContext';
-
-const SEMESTERS = [
-  '1st Semester','2nd Semester','3rd Semester','4th Semester',
-  '5th Semester','6th Semester','7th Semester','8th Semester',
-  '9th Semester','10th Semester'
-];
 
 export default function Header() {
   const location = useLocation();
   const [navOpen, setNavOpen] = useState(false);
-  const { scope, departments, updateDepartment, updateSemester } = useScope();
 
   const page = location.pathname === '/' ? 'home'
     : location.pathname === '/about' ? 'about'
@@ -19,10 +11,6 @@ export default function Header() {
     : location.pathname === '/notes' ? 'notes'
     : location.pathname === '/login' ? 'login'
     : '';
-
-  // The Lab Manuals page now owns its own department/semester filters in
-  // its filter bar, so the global scope bar is only shown on the Notes page.
-  const showScopeBar = page === 'notes';
 
   function isActive(p) {
     return page === p ? 'active' : '';
@@ -86,34 +74,6 @@ export default function Header() {
         </div>
       </nav>
 
-      {showScopeBar && (
-        <div className="scope-bar">
-          <div className="container">
-            <label>Show resources for</label>
-            <select
-              id="scopeDept"
-              value={scope.department}
-              onChange={e => updateDepartment(e.target.value)}
-            >
-              <option value="">All Departments</option>
-              {departments.map(d => (
-                <option key={d.code} value={d.code}>{d.name}</option>
-              ))}
-            </select>
-            <select
-              id="scopeSem"
-              value={scope.semester}
-              onChange={e => updateSemester(e.target.value)}
-            >
-              <option value="">All Semesters</option>
-              {SEMESTERS.map(s => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-            <span className="hint">Filters lab manuals and notes by your department and semester</span>
-          </div>
-        </div>
-      )}
     </header>
   );
 }

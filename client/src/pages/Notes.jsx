@@ -1,19 +1,18 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useScope } from '../contexts/ScopeContext';
 import { formatDate, formatBytes, fileIcon, deptLabel, setDeptLabel } from '../utils/helpers';
 import Spinner from '../components/Spinner';
 
 const SEMESTERS = ['1st Semester','2nd Semester','3rd Semester','4th Semester','5th Semester','6th Semester','7th Semester','8th Semester','9th Semester','10th Semester'];
 
 export default function Notes() {
-  const { scope } = useScope();
   const [search, setSearch] = useState('');
-  const [subjectFilter, setSubjectFilter] = useState('');
+  const [departmentFilter, setDepartmentFilter] = useState('');
   const [semesterFilter, setSemesterFilter] = useState('');
+  const [subjectFilter, setSubjectFilter] = useState('');
+  const [departments, setDepartments] = useState([]);
   const [allSubjects, setAllSubjects] = useState([]);
   const [notes, setNotes] = useState(null);
-  const [noteDepts, setNoteDepts] = useState([]);
   const [formData, setFormData] = useState({
     title: '', description: '', department: '', semester: '', subject_id: '',
     submitted_by: '', submitted_email: ''
@@ -32,7 +31,6 @@ export default function Notes() {
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
-      // Element may not be in DOM yet - retry after render
       const t = setTimeout(() => {
         document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 150);
@@ -45,7 +43,7 @@ export default function Notes() {
       .then(r => r.json())
       .then(d => {
         const depts = d.departments || [];
-        setNoteDepts(depts);
+        setDepartments(depts);
         depts.forEach(dep => setDeptLabel(dep.code, dep.name));
       })
       .catch(() => {});
@@ -56,24 +54,29 @@ export default function Notes() {
       .catch(() => {});
   }, []);
 
-  function filterSubjects(department, semester) {
-    const dept = (department || '').toLowerCase();
+  // Subjects narrowed by the currently-selected department and semester.
+  const visibleSubjects = useMemo(() => {
+    const dept = (departmentFilter || '').toLowerCase();
     return allSubjects.filter(s => {
       if (dept && s.department !== dept) return false;
-      if (semester && s.semester !== semester) return false;
+      if (semesterFilter && s.semester !== semesterFilter) return false;
       return true;
     });
-  }
+  }, [allSubjects, departmentFilter, semesterFilter]);
 
-  const filteredScopeSubjects = filterSubjects(scope.department, scope.semester);
-  const filteredFormSubjects = filterSubjects(formData.department, formData.semester);
+  // Clear subject filter if it falls outside the visible set.
+  useEffect(() => {
+    if (!subjectFilter) return;
+    if (!visibleSubjects.some(s => String(s.id) === String(subjectFilter))) {
+      setSubjectFilter('');
+    }
+  }, [visibleSubjects, subjectFilter]);
 
   const loadNotes = useCallback(() => {
     const params = new URLSearchParams();
     if (subjectFilter) params.set('subject_id', subjectFilter);
-    const sem = semesterFilter || scope.semester;
-    if (sem) params.set('semester', sem);
-    if (scope.department) params.set('department', scope.department);
+    if (semesterFilter) params.set('semester', semesterFilter);
+    if (departmentFilter) params.set('department', departmentFilter);
 
     setNotes(null);
     fetch('/api/notes?' + params.toString(), { credentials: 'omit' })
@@ -91,7 +94,7 @@ export default function Notes() {
         setNotes(list);
       })
       .catch(() => setNotes([]));
-  }, [subjectFilter, semesterFilter, scope.semester, scope.department, search]);
+  }, [subjectFilter, semesterFilter, departmentFilter, search]);
 
   useEffect(() => {
     clearTimeout(debounceRef.current);
@@ -101,9 +104,20 @@ export default function Notes() {
 
   function resetFilters() {
     setSearch('');
-    setSubjectFilter('');
+    setDepartmentFilter('');
     setSemesterFilter('');
+    setSubjectFilter('');
   }
+
+  // Subjects for the submit form, narrowed by form department+semester.
+  const filteredFormSubjects = useMemo(() => {
+    const dept = (formData.department || '').toLowerCase();
+    return allSubjects.filter(s => {
+      if (dept && s.department !== dept) return false;
+      if (formData.semester && s.semester !== formData.semester) return false;
+      return true;
+    });
+  }, [allSubjects, formData.department, formData.semester]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -157,15 +171,33 @@ export default function Notes() {
               onChange={e => setSearch(e.target.value)}
               placeholder="Search notes..."
             />
-            <select value={subjectFilter} onChange={e => setSubjectFilter(e.target.value)}>
-              <option value="">All Subjects</option>
-              {filteredScopeSubjects.map(s => (
-                <option key={s.id} value={s.id}>{s.name} - {s.semester}</option>
+            <select
+              value={departmentFilter}
+              onChange={e => { setDepartmentFilter(e.target.value); setSubjectFilter(''); }}
+              aria-label="Filter by department"
+            >
+              <option value="">All Departments</option>
+              {departments.map(d => (
+                <option key={d.code} value={d.code}>{d.name}</option>
               ))}
             </select>
-            <select value={semesterFilter} onChange={e => setSemesterFilter(e.target.value)}>
+            <select
+              value={semesterFilter}
+              onChange={e => { setSemesterFilter(e.target.value); setSubjectFilter(''); }}
+              aria-label="Filter by semester"
+            >
               <option value="">All Semesters</option>
               {SEMESTERS.map(s => <option key={s}>{s}</option>)}
+            </select>
+            <select
+              value={subjectFilter}
+              onChange={e => setSubjectFilter(e.target.value)}
+              aria-label="Filter by subject"
+            >
+              <option value="">All Subjects</option>
+              {visibleSubjects.map(s => (
+                <option key={s.id} value={s.id}>{s.name} - {s.semester}</option>
+              ))}
             </select>
             <button className="btn btn-secondary" onClick={resetFilters}>Reset</button>
             <button className="btn btn-primary" onClick={() => document.getElementById('submit')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
@@ -208,7 +240,7 @@ export default function Notes() {
                 <form onSubmit={handleSubmit} encType="multipart/form-data">
                   <div className="form-group">
                     <label>Note Title *</label>
-                    <input type="text" required placeholder="e.g. Thermodynamics Unit 3 - summary notes"
+                    <input type="text" required placeholder="e.g. Thermodynamics Unit 3 summary notes"
                       value={formData.title} onChange={e => setFormData(f => ({ ...f, title: e.target.value }))} />
                   </div>
                   <div className="form-group">
@@ -221,15 +253,15 @@ export default function Notes() {
                       <label>Department *</label>
                       <select required value={formData.department}
                         onChange={e => setFormData(f => ({ ...f, department: e.target.value, subject_id: '' }))}>
-                        <option value="">- Select -</option>
-                        {noteDepts.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
+                        <option value="">- Select</option>
+                        {departments.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
                       </select>
                     </div>
                     <div className="form-group">
                       <label>Semester *</label>
                       <select required value={formData.semester}
                         onChange={e => setFormData(f => ({ ...f, semester: e.target.value, subject_id: '' }))}>
-                        <option value="">- Select -</option>
+                        <option value="">- Select</option>
                         {SEMESTERS.map(s => <option key={s}>{s}</option>)}
                       </select>
                     </div>
@@ -238,10 +270,10 @@ export default function Notes() {
                       <select value={formData.subject_id}
                         onChange={e => setFormData(f => ({ ...f, subject_id: e.target.value }))}>
                         {filteredFormSubjects.length === 0 && (formData.department || formData.semester) ? (
-                          <option value="">- No subjects for this department / semester -</option>
+                          <option value="">- No subjects for this department / semester</option>
                         ) : (
                           <>
-                            <option value="">- Select -</option>
+                            <option value="">- Select</option>
                             {filteredFormSubjects.map(s => (
                               <option key={s.id} value={s.id}>{s.name} - {s.semester}</option>
                             ))}
@@ -263,7 +295,7 @@ export default function Notes() {
                     </div>
                   </div>
                   <div className="form-group">
-                    <label>File * <small>(PDF, DOC, DOCX, PPT, ZIP - max 50 MB)</small></label>
+                    <label>File * <small>(PDF DOC DOCX PPT ZIP max 50 MB)</small></label>
                     <input type="file" required accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.txt"
                       onChange={e => setFormFile(e.target.files[0])} />
                   </div>
@@ -286,12 +318,12 @@ function NoteCard({ n }) {
       <div className="manual-card-top" style={{ background: 'linear-gradient(135deg, var(--primary), #335a96)' }}>
         <div className="manual-icon">{fileIcon(n.file_type)}</div>
         <h3>{n.title}</h3>
-        <div className="meta">{n.subject_name || n.subject || 'Note'} • {n.semester}</div>
+        <div className="meta">{n.subject_name || n.subject || 'Note'} - {n.semester}</div>
       </div>
       <div className="manual-card-body">
         <p className="desc">
           {(n.description || 'No description provided.').slice(0, 150)}
-          {(n.description || '').length > 150 ? '…' : ''}
+          {(n.description || '').length > 150 ? '...' : ''}
         </p>
         <div className="manual-meta-row">
           <span className="manual-tag">{deptLabel(n.department)}</span>
