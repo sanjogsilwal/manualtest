@@ -23,9 +23,7 @@
   <main>
     <div class="container">
       <div class="filter-bar">
-        <input type="search" id="searchInput" placeholder="Search by title or keyword..." />
-        <select id="subjectFilter"><option value="">All Subjects</option></select>
-        <select id="categoryFilter"><option value="">All Categories</option></select>
+        <select id="departmentFilter"><option value="">All Departments</option></select>
         <select id="semesterFilter">
           <option value="">All Semesters</option>
           <option>1st Semester</option><option>2nd Semester</option>
@@ -33,6 +31,9 @@
           <option>5th Semester</option><option>6th Semester</option>
           <option>7th Semester</option><option>8th Semester</option>
         </select>
+        <select id="subjectFilter"><option value="">All Subjects</option></select>
+        <select id="categoryFilter"><option value="">All Categories</option></select>
+        <input type="search" id="searchInput" placeholder="Search by title or keyword..." />
         <button class="btn btn-secondary" onclick="resetFilters()">Reset</button>
       </div>
 
@@ -55,46 +56,66 @@
     let allSubjects   = [];
     let debounceTimer;
 
-    async function loadCategories() {
-      const res = await fetch('/api/admin/categories');
-      const data = await res.json();
-      allCategories = data.categories;
-      const sel = document.getElementById('categoryFilter');
-      sel.innerHTML = '<option value="">All Categories</option>' +
-        allCategories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+    async function loadDepartments() {
+      try {
+        const res  = await fetch('/api/admin/departments');
+        const data = await res.json();
+        const scope = getScope();
+        const sel  = document.getElementById('departmentFilter');
+        sel.innerHTML = '<option value="">All Departments</option>' +
+          data.departments.map(d =>
+            `<option value="${escapeHtml(d.code)}" ${scope.department === d.code ? 'selected' : ''}>${escapeHtml(d.name)}</option>`
+          ).join('');
+      } catch (_) {}
     }
+
+    async function loadCategories() {
+      try {
+        const res  = await fetch('/api/admin/categories');
+        const data = await res.json();
+        allCategories = data.categories;
+        const sel = document.getElementById('categoryFilter');
+        sel.innerHTML = '<option value="">All Categories</option>' +
+          allCategories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+      } catch (_) {}
+    }
+
     async function loadSubjects() {
-      const scope = getScope();
+      const dept = document.getElementById('departmentFilter').value;
+      const sem  = document.getElementById('semesterFilter').value;
       const p = new URLSearchParams();
-      if (scope.department) p.set('department', scope.department);
-      if (scope.semester)   p.set('semester',   scope.semester);
-      const res = await fetch('/api/subjects?' + p.toString());
-      const data = await res.json();
-      allSubjects = data.subjects;
-      const sel = document.getElementById('subjectFilter');
-      sel.innerHTML = '<option value="">All Subjects</option>' +
-        allSubjects.map(s => `<option value="${s.id}">${escapeHtml(s.name)} — ${escapeHtml(s.semester)}</option>`).join('');
+      if (dept) p.set('department', dept);
+      if (sem)  p.set('semester',   sem);
+      try {
+        const res  = await fetch('/api/subjects?' + p.toString());
+        const data = await res.json();
+        allSubjects = data.subjects;
+        const sel = document.getElementById('subjectFilter');
+        sel.innerHTML = '<option value="">All Subjects</option>' +
+          allSubjects.map(s =>
+            `<option value="${s.id}">${escapeHtml(s.name)}</option>`
+          ).join('');
+      } catch (_) {}
     }
 
     async function loadManuals() {
-      const scope    = getScope();
-      const search   = document.getElementById('searchInput').value;
-      const cat      = document.getElementById('categoryFilter').value;
-      const subject  = document.getElementById('subjectFilter').value;
-      const semester = document.getElementById('semesterFilter').value || scope.semester;
-      const dept     = scope.department;
+      const search = document.getElementById('searchInput').value.trim();
+      const dept   = document.getElementById('departmentFilter').value;
+      const sem    = document.getElementById('semesterFilter').value;
+      const subj   = document.getElementById('subjectFilter').value;
+      const cat    = document.getElementById('categoryFilter').value;
 
       const params = new URLSearchParams();
-      if (search)     params.set('search', search);
-      if (cat)        params.set('category', cat);
-      if (subject)    params.set('subject_id', subject);
-      if (semester)   params.set('semester', semester);
-      if (dept)       params.set('department', dept);
+      if (search) params.set('search',     search);
+      if (dept)   params.set('department', dept);
+      if (sem)    params.set('semester',   sem);
+      if (subj)   params.set('subject_id', subj);
+      if (cat)    params.set('category',   cat);
 
       const container = document.getElementById('manualsContainer');
       container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
       try {
-        const res = await fetch('/api/manuals?' + params.toString());
+        const res  = await fetch('/api/manuals?' + params.toString());
         const data = await res.json();
         renderManuals(data.manuals);
       } catch (e) {
@@ -103,7 +124,21 @@
     }
 
     function renderManuals(manuals) {
-      const container = document.getElementById('manualsContainer');
+      const container  = document.getElementById('manualsContainer');
+      const dept   = document.getElementById('departmentFilter');
+      const sem    = document.getElementById('semesterFilter');
+      const search = document.getElementById('searchInput').value.trim();
+
+      let title = 'All Manuals';
+      if (search) {
+        title = `Results for "${search}"`;
+      } else if (dept.value || sem.value) {
+        const parts = [];
+        if (dept.value) parts.push(dept.options[dept.selectedIndex].text);
+        if (sem.value)  parts.push(sem.value);
+        title = parts.join(' — ');
+      }
+      document.getElementById('resultsTitle').textContent = title;
       document.getElementById('resultsCount').textContent =
         `${manuals.length} ${manuals.length === 1 ? 'manual' : 'manuals'} found`;
 
@@ -112,7 +147,7 @@
           <div class="empty-state">
             <div class="icon">M</div>
             <h3>No manuals found</h3>
-            <p>Try changing the filters above or clearing your department/semester selection.</p>
+            <p>Try changing the filters above.</p>
           </div>`;
         return;
       }
@@ -125,12 +160,12 @@
           <div class="manual-card-top">
             <div class="manual-icon">${fileIcon(m.file_type)}</div>
             <h3>${escapeHtml(m.title)}</h3>
-            <div class="meta">${escapeHtml(m.subject || m.category_name || 'Uncategorized')} ${m.semester ? '• ' + escapeHtml(m.semester) : ''}</div>
+            <div class="meta">${escapeHtml(m.subject_name || m.subject || m.category_name || 'Uncategorized')} ${m.semester ? '• ' + escapeHtml(m.semester) : ''}</div>
           </div>
           <div class="manual-card-body">
             <p class="desc">${escapeHtml((m.description || 'No description provided.').slice(0, 150))}${(m.description || '').length > 150 ? '…' : ''}</p>
             <div class="manual-meta-row">
-              <span class="manual-tag">${deptLabel(m.department) || 'Both Depts'}</span>
+              <span class="manual-tag">${deptLabel(m.department) || 'All Depts'}</span>
               ${m.subject_name ? `<span class="manual-tag">${escapeHtml(m.subject_name)}</span>` : ''}
               <span class="manual-tag">${(m.file_type || '').toUpperCase()}</span>
               <span class="manual-tag">${formatBytes(m.file_size)}</span>
@@ -145,27 +180,41 @@
     }
 
     function resetFilters() {
-      document.getElementById('searchInput').value = '';
-      document.getElementById('categoryFilter').value = '';
-      document.getElementById('subjectFilter').value  = '';
-      document.getElementById('semesterFilter').value = '';
-      loadManuals();
+      document.getElementById('searchInput').value      = '';
+      document.getElementById('departmentFilter').value = '';
+      document.getElementById('semesterFilter').value   = '';
+      document.getElementById('subjectFilter').value    = '';
+      document.getElementById('categoryFilter').value   = '';
+      setScope('', '');
+      loadSubjects().then(loadManuals);
     }
 
     document.getElementById('searchInput').addEventListener('input', () => {
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(loadManuals, 300);
     });
-    document.getElementById('categoryFilter').addEventListener('change', loadManuals);
+    document.getElementById('departmentFilter').addEventListener('change', () => {
+      setScope(document.getElementById('departmentFilter').value, undefined);
+      loadSubjects().then(loadManuals);
+    });
+    document.getElementById('semesterFilter').addEventListener('change', () => {
+      setScope(undefined, document.getElementById('semesterFilter').value);
+      loadSubjects().then(loadManuals);
+    });
     document.getElementById('subjectFilter').addEventListener('change',  loadManuals);
-    document.getElementById('semesterFilter').addEventListener('change', loadManuals);
+    document.getElementById('categoryFilter').addEventListener('change', loadManuals);
 
-    document.addEventListener('scopechange', () => { loadSubjects(); loadManuals(); });
+    // Initialise: load static data first, then pre-fill scope from localStorage/URL, then cascade
+    Promise.all([loadDepartments(), loadCategories()]).then(() => {
+      const scope = getScope();
+      // departmentFilter is pre-selected via the selected attribute in loadDepartments()
+      if (scope.semester) document.getElementById('semesterFilter').value = scope.semester;
 
-    const urlSearch = new URLSearchParams(window.location.search).get('search');
-    if (urlSearch) document.getElementById('searchInput').value = urlSearch;
+      const urlSearch = new URLSearchParams(window.location.search).get('search');
+      if (urlSearch) document.getElementById('searchInput').value = urlSearch;
 
-    Promise.all([loadCategories(), loadSubjects()]).then(loadManuals);
+      return loadSubjects();
+    }).then(loadManuals);
   </script>
 </body>
 </html>

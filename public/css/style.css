@@ -624,6 +624,23 @@ main { flex: 1; padding: 36px 0; }
 .download-count { font-size: 12px; color: var(--text-muted); }
 
 /* ===== Filter bar ====================================================== */
+.filter-bar-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.filter-bar-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.filter-bar-hint {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
 .filter-bar {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -631,7 +648,7 @@ main { flex: 1; padding: 36px 0; }
   padding: 14px;
   margin-bottom: 22px;
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 1fr auto;
+  grid-template-columns: 1fr 1fr 1fr 1fr 2fr auto;
   gap: 10px;
   align-items: center;
   box-shadow: var(--shadow-sm);
@@ -1102,7 +1119,8 @@ table tr:last-child td { border-bottom: 0; }
   .footer-grid    { grid-template-columns: 1fr 1fr; }
   .feature-grid   { grid-template-columns: 1fr 1fr; }
   .research-grid  { grid-template-columns: 1fr 1fr; }
-  .filter-bar     { grid-template-columns: 1fr 1fr; }
+  .filter-bar     { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .filter-bar-hint { display: none; }
   .admin-layout   { grid-template-columns: 200px 1fr; }
   .admin-content  { padding: 20px 22px; }
 }
@@ -1165,8 +1183,10 @@ table tr:last-child td { border-bottom: 0; }
   .form-row-3 { grid-template-columns: 1fr; gap: 0; }
 
   /* Filter bar → full-width stacked */
-  .filter-bar { grid-template-columns: 1fr; }
-  .filter-bar .btn { width: 100%; justify-content: center; }
+  .filter-bar { grid-template-columns: 1fr 1fr; }
+  .filter-bar input[type=search] { grid-column: 1 / -1; }
+  .filter-bar .btn { grid-column: 1 / -1; width: 100%; justify-content: center; }
+  .filter-bar-hint { display: none; }
 
   /* Scope bar */
   .scope-bar .hint { display: none; }
@@ -1218,5 +1238,7 @@ table tr:last-child td { border-bottom: 0; }
   .section-title        { font-size: 20px; }
 
   /* Compact filter bar on very small screens */
-  .filter-bar           { padding: 10px; gap: 8px; }
+  .filter-bar           { padding: 10px; gap: 8px; grid-template-columns: 1fr; }
+  .filter-bar input[type=search] { grid-column: 1; }
+  .filter-bar .btn      { grid-column: 1; }
 }

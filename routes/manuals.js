@@ -40,10 +40,8 @@ const upload = multer({
 
 function normaliseDepartment(d) {
   const v = (d || '').toLowerCase().trim();
-  if (['automobile', 'mechanical', 'both'].includes(v)) return v;
-  return 'both';
+  return v || 'both';
 }
-const VALID_DEPT = (d) => ['automobile', 'mechanical', 'both'].includes(d);
 
 module.exports = (db) => {
   const router = express.Router();
@@ -69,16 +67,26 @@ module.exports = (db) => {
     // Anonymous visitors only see public manuals.
     if (!isLoggedIn) sql += ' AND m.is_public = 1';
 
-    if (category)   { sql += ' AND m.category_id = ?'; params.push(category); }
-    if (subject_id) { sql += ' AND m.subject_id  = ?'; params.push(subject_id); }
-    if (semester)   { sql += ' AND m.semester    = ?'; params.push(semester); }
-    if (department && VALID_DEPT(department)) {
-      // 'both' student sees both-department + own; otherwise show department or 'both'
-      if (department === 'both') {
-        // no extra filter — show all departments
+    if (category) { sql += ' AND m.category_id = ?'; params.push(category); }
+    if (subject_id) {
+      // Expand filter to all subjects sharing the same code (cross-department linking)
+      const subj = db.prepare('SELECT code FROM subjects WHERE id = ?').get(subject_id);
+      if (subj && subj.code) {
+        const linked = db.prepare('SELECT id FROM subjects WHERE code = ?').all(subj.code);
+        const ids = linked.map(s => s.id);
+        sql += ` AND m.subject_id IN (${ids.map(() => '?').join(',')})`;
+        params.push(...ids);
       } else {
+        sql += ' AND m.subject_id = ?';
+        params.push(subject_id);
+      }
+    }
+    if (semester)   { sql += ' AND m.semester    = ?'; params.push(semester); }
+    if (department) {
+      const dept = department.toLowerCase().trim();
+      if (dept && dept !== 'both') {
         sql += " AND (m.department = ? OR m.department = 'both')";
-        params.push(department);
+        params.push(dept);
       }
     }
     if (search) {
