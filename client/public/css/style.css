@@ -98,6 +98,14 @@ main { flex: 1; padding: 36px 0; }
   position: sticky;
   top: 0;
   z-index: 100;
+  box-shadow: 0 2px 8px rgba(45,74,53,.07);
+}
+/* Gold accent stripe at very top */
+.site-header::before {
+  content: '';
+  display: block;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-dark), var(--primary));
 }
 .header-main { padding: 14px 0; }
 .header-main .container {
@@ -867,8 +875,11 @@ table tr:last-child td { border-bottom: 0; }
   gap: 10px;
 }
 
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes fadeIn    { from { opacity: 0; }                          to { opacity: 1; } }
+@keyframes slideUp   { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes fadeInUp  { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes fadeInLeft{ from { transform: translateX(-10px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes pulse     { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
 
 /* ===== Admin layout ==================================================== */
 .admin-layout {
@@ -1286,4 +1297,383 @@ table tr:last-child td { border-bottom: 0; }
   .filter-bar           { padding: 10px; gap: 8px; grid-template-columns: minmax(0, 1fr); }
   .filter-bar input[type=search] { grid-column: 1; }
   .filter-bar .btn      { grid-column: 1; width: 100%; justify-content: center; }
+}
+
+/* ============================================================
+   Campus polish — micro-interactions, animation, visual detail
+   ============================================================ */
+
+/* Custom scrollbar (Webkit) */
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--panel-dark); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary-light); }
+
+/* Brand-consistent text selection */
+::selection { background: rgba(224, 169, 59, .22); color: var(--primary-dark); }
+
+/* ---- Filter bar: left accent stripe + subtle tint ------------------- */
+.filter-bar {
+  border-left: 3px solid var(--accent);
+  background: linear-gradient(to right, rgba(224, 169, 59, .04), var(--surface));
+}
+
+/* ---- Nav: gentle background tint on hover/active ------------------- */
+.nav-list li a:hover {
+  background: rgba(224, 169, 59, .08);
+  border-radius: var(--radius-sm);
+}
+.nav-list li a.active {
+  background: rgba(45, 74, 53, .06);
+  border-radius: var(--radius-sm);
+}
+
+/* ---- Page header h1: short gold underline bar ---------------------- */
+.page-header h1::after {
+  content: '';
+  display: block;
+  width: 44px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+  border-radius: 2px;
+  margin-top: 10px;
+}
+
+/* ---- Section bar: left accent, matching filter bar ----------------- */
+.section-bar {
+  border-left: 3px solid var(--accent);
+  padding-left: 12px;
+}
+
+/* ---- Manual card: richer hover + icon accent ----------------------- */
+.manual-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 32px rgba(45, 74, 53, .14), 0 2px 6px rgba(45, 74, 53, .06);
+}
+.manual-icon { transition: background .22s, color .22s; }
+.manual-card:hover .manual-icon {
+  background: rgba(224, 169, 59, .2);
+  color: var(--accent-dark);
+}
+
+/* ---- Feature box: icon scale on hover ------------------------------ */
+.feature-box .icon {
+  transition: transform .22s ease, background .22s, color .22s, border-color .22s;
+}
+.feature-box:hover .icon {
+  transform: scale(1.1);
+  color: var(--accent-dark);
+  background: var(--panel);
+  border-color: var(--accent);
+}
+
+/* ---- Research / general cards: subtle hover lift ------------------- */
+.research-card {
+  transition: transform .18s, box-shadow .18s;
+}
+.research-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+
+/* ---- Dashboard stat cards: hover lift ------------------------------ */
+.dash-stat {
+  cursor: default;
+  transition: transform .18s, box-shadow .18s;
+}
+.dash-stat:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+
+/* ---- Pulsing "System Online" indicator ----------------------------- */
+@keyframes live-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(12, 138, 62, .55); }
+  60%       { box-shadow: 0 0 0 6px rgba(12, 138, 62, 0); }
+}
+.footer-status .dot { animation: live-pulse 2.4s ease-in-out infinite; }
+
+/* ---- About page h2: left accent rule ------------------------------ */
+.about-content h2 {
+  padding-left: 12px;
+  border-left: 3px solid var(--accent);
+}
+
+/* ---- Hero content: entrance animation ----------------------------- */
+/* Hero is above the fold — CSS animation is correct here (not scroll reveal) */
+.hero .container { animation: fadeInUp .55s both; }
+
+/* ---- Alert icons: prefix symbol ----------------------------------- */
+.alert-success::before { content: '✓  '; font-weight: 700; }
+.alert-error::before   { content: '✕  '; font-weight: 700; }
+.alert-info::before    { content: 'ℹ  '; font-weight: 700; }
+.alert-warning::before { content: '⚠  '; font-weight: 700; }
+
+/* ---- Spinner: two-tone accent ------------------------------------- */
+.spinner {
+  border-color: var(--border);
+  border-top-color: var(--accent);
+  border-right-color: rgba(224, 169, 59, .35);
+}
+
+/* ---- Footer logo: subtle hover interaction ------------------------- */
+.footer-brand .logo-row img {
+  transition: transform .22s ease;
+}
+.footer-brand .logo-row img:hover {
+  transform: scale(1.06) rotate(-2deg);
+}
+
+/* ---- List card head icon: accent color ---------------------------- */
+.list-card .head h3 .icon { color: var(--accent-dark); }
+
+/* ---- Submit card: hover lift -------------------------------------- */
+.submit-card { transition: transform .18s, box-shadow .18s; }
+.submit-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+
+/* ---- Breadcrumb separator ---------------------------------------- */
+.breadcrumb { letter-spacing: .02em; }
+
+/* ---- Brand logo: gentle hover scale ------------------------------ */
+.brand .brand-logo {
+  transition: transform .22s ease;
+}
+.brand:hover .brand-logo { transform: scale(1.04); }
+
+/* ---- Card body: section title left-aligned (not centered in bars) - */
+.section-bar .section-title { text-align: left; }
+
+/* ---- Login card: gentle entrance ---------------------------------- */
+.login-card { animation: slideUp .35s both; }
+
+/* ---- Table row: smoother hover ------------------------------------ */
+table tr { transition: background .12s; }
+
+/* ---- Input focus: consistent themed ring (global override) -------- */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(224, 169, 59, .18);
+}
+
+/* ============================================================
+   Hover animation upgrade — spring physics + layered depth
+   ============================================================ */
+
+/* Spring easing token — slight overshoot, snappy feel */
+:root { --spring: cubic-bezier(.34, 1.42, .64, 1); }
+
+/* ---- Navigation links: sliding underline --------------------------- */
+/* Remove the border-bottom approach; use ::after scaleX instead */
+.nav-list li a {
+  border-bottom: 3px solid transparent;
+  transition: color .18s ease, background .18s ease, border-color .25s var(--spring);
+}
+.nav-list li a:hover {
+  border-bottom-color: rgba(224, 169, 59, .45);
+  background: rgba(224, 169, 59, .07);
+  border-radius: var(--radius-sm);
+}
+.nav-list li a.active {
+  border-bottom-color: var(--accent);
+  background: rgba(45, 74, 53, .06);
+  border-radius: var(--radius-sm);
+}
+
+/* ---- Manual / note cards ------------------------------------------- */
+.manual-card {
+  transition:
+    transform .32s var(--spring),
+    box-shadow .32s ease,
+    border-color .22s ease;
+}
+.manual-card:hover {
+  transform: translateY(-8px);
+  box-shadow:
+    0 24px 48px rgba(45, 74, 53, .16),
+    0 8px 16px rgba(45, 74, 53, .08),
+    inset 0 -3px 0 var(--accent);
+  border-color: rgba(224, 169, 59, .35);
+}
+
+/* Card icon: scales and spins slightly on card hover */
+.manual-icon {
+  transition: background .25s ease, color .25s ease, transform .3s var(--spring);
+}
+.manual-card:hover .manual-icon {
+  background: rgba(224, 169, 59, .22);
+  color: var(--accent-dark);
+  transform: scale(1.15) rotate(-4deg);
+}
+
+/* ---- Feature boxes ------------------------------------------------- */
+.feature-box {
+  transition: transform .32s var(--spring), box-shadow .32s ease;
+}
+.feature-box:hover {
+  transform: translateY(-7px) scale(1.015);
+  box-shadow:
+    0 20px 44px rgba(45, 74, 53, .14),
+    0 6px 14px rgba(45, 74, 53, .07);
+}
+.feature-box .icon {
+  transition: transform .3s var(--spring), background .22s, color .22s, border-color .22s;
+}
+.feature-box:hover .icon {
+  transform: scale(1.18) rotate(-5deg);
+  color: var(--accent-dark);
+  background: var(--panel);
+  border-color: var(--accent);
+}
+
+/* ---- Buttons: spring lift + glow ----------------------------------- */
+.btn-primary {
+  transition: background .18s ease, color .18s ease,
+              transform .25s var(--spring), box-shadow .25s ease;
+}
+.btn-primary:hover {
+  background: var(--accent-dark);
+  color: #fff;
+  transform: translateY(-2px) scale(1.025);
+  box-shadow: 0 6px 22px rgba(224, 169, 59, .42);
+}
+.btn-secondary {
+  transition: background .18s ease, color .18s ease,
+              transform .25s var(--spring), box-shadow .25s ease;
+}
+.btn-secondary:hover {
+  background: var(--primary-dark);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 16px rgba(45, 74, 53, .28);
+}
+.btn-ghost {
+  transition: all .22s var(--spring);
+}
+.btn-ghost:hover {
+  background: var(--bg-soft);
+  color: var(--accent-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(45, 74, 53, .1);
+}
+.btn-link {
+  transition: all .22s var(--spring);
+}
+.btn-link:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(224, 169, 59, .3);
+}
+
+/* ---- Research cards ------------------------------------------------ */
+.research-card {
+  transition: transform .28s var(--spring), box-shadow .28s ease;
+}
+.research-card:hover {
+  transform: translateY(-6px);
+  box-shadow:
+    0 18px 40px rgba(45, 74, 53, .13),
+    0 6px 12px rgba(45, 74, 53, .06);
+}
+
+/* ---- Submit cards -------------------------------------------------- */
+.submit-card {
+  transition: transform .28s var(--spring), box-shadow .28s ease;
+}
+.submit-card:hover {
+  transform: translateY(-5px);
+  box-shadow:
+    0 16px 36px rgba(45, 74, 53, .12),
+    0 4px 10px rgba(45, 74, 53, .06);
+}
+
+/* ---- Dashboard stat cards ------------------------------------------ */
+.dash-stat {
+  transition: transform .28s var(--spring), box-shadow .28s ease;
+}
+.dash-stat:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 28px rgba(45, 74, 53, .13);
+}
+
+/* ---- Generic card -------------------------------------------------- */
+.card {
+  transition: transform .25s var(--spring), box-shadow .25s ease;
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(45, 74, 53, .1);
+}
+
+/* ---- Footer links: slide right on hover ---------------------------- */
+.footer-col a {
+  display: inline-block;
+  transition: color .18s ease, transform .22s var(--spring);
+}
+.footer-col a:hover {
+  color: var(--accent-dark);
+  transform: translateX(5px);
+}
+
+/* ---- View-all / section links ------------------------------------- */
+.view-all-link {
+  display: inline-block;
+  transition: color .15s ease, transform .22s var(--spring);
+}
+.view-all-link:hover {
+  color: var(--primary);
+  transform: translateX(4px);
+}
+
+/* ---- Tab bar -------------------------------------------------------- */
+.tab {
+  transition: color .18s ease, border-color .2s ease, background .18s ease;
+}
+.tab:hover {
+  background: rgba(224, 169, 59, .06);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+.tab.active {
+  background: rgba(45, 74, 53, .04);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+/* ---- Table rows: left accent flash on hover ------------------------ */
+table tr { transition: background .12s ease; }
+table tr:hover td:first-child {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+/* ---- Modal close: spin on hover ------------------------------------ */
+.modal-close {
+  transition: background .15s ease, color .15s ease, transform .25s var(--spring);
+}
+.modal-close:hover {
+  background: var(--danger-bg);
+  color: var(--danger);
+  transform: scale(1.12) rotate(90deg);
+}
+
+/* ---- Admin nav: smooth indicator ----------------------------------- */
+.admin-nav li a {
+  transition: background .18s ease, color .18s ease, border-left-color .2s ease;
+}
+
+/* ---- Brand logo in header: gentle scale ---------------------------- */
+.brand { transition: opacity .18s ease; }
+.brand:hover { opacity: .92; }
+.brand .brand-logo {
+  transition: transform .3s var(--spring);
+}
+.brand:hover .brand-logo { transform: scale(1.06) rotate(-2deg); }
+
+/* ---- Nav toggle (mobile): bounce press ----------------------------- */
+.nav-toggle {
+  transition: background .15s ease, color .15s ease, transform .2s var(--spring);
+}
+.nav-toggle:hover { transform: scale(1.04); }
+.nav-toggle:active { transform: scale(.96); }
+
+/* ---- Breadcrumb links --------------------------------------------- */
+.breadcrumb a {
+  transition: color .15s ease;
+  font-weight: 500;
 }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Panel - Campus Study Hub</title>
+  <title>Admin Panel - LearnSpace</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -109,8 +109,8 @@
   <div class="admin-layout">
     <aside class="admin-sidebar">
       <div class="user-info">
-        <div class="name" id="adminName">â€”</div>
-        <div class="role" id="adminRole">â€”</div>
+        <div class="name" id="adminName">-</div>
+        <div class="role" id="adminRole">-</div>
       </div>
       <ul class="admin-nav">
         <li><a href="#dashboard"   class="active" data-section="dashboard">Dashboard</a></li>
@@ -133,12 +133,12 @@
       <section class="admin-section active" id="section-dashboard">
         <div class="section-bar"><h2>Dashboard Overview</h2></div>
         <div class="dashboard-stats">
-          <div class="dash-stat"><div class="num" id="ds-manuals">â€”</div><div class="lbl">Total Manuals</div></div>
-          <div class="dash-stat"><div class="num" id="ds-public">â€”</div><div class="lbl">Public</div></div>
-          <div class="dash-stat"><div class="num" id="ds-private">â€”</div><div class="lbl">Private</div></div>
-          <div class="dash-stat"><div class="num" id="ds-subjects">â€”</div><div class="lbl">Subjects</div></div>
-          <div class="dash-stat"><div class="num" id="ds-notes-pending">â€”</div><div class="lbl">Notes Pending</div></div>
-          <div class="dash-stat"><div class="num" id="ds-downloads">â€”</div><div class="lbl">Total Downloads</div></div>
+          <div class="dash-stat"><div class="num" id="ds-manuals">-</div><div class="lbl">Total Manuals</div></div>
+          <div class="dash-stat"><div class="num" id="ds-public">-</div><div class="lbl">Public</div></div>
+          <div class="dash-stat"><div class="num" id="ds-private">-</div><div class="lbl">Private</div></div>
+          <div class="dash-stat"><div class="num" id="ds-subjects">-</div><div class="lbl">Subjects</div></div>
+          <div class="dash-stat"><div class="num" id="ds-notes-pending">-</div><div class="lbl">Notes Pending</div></div>
+          <div class="dash-stat"><div class="num" id="ds-downloads">-</div><div class="lbl">Total Downloads</div></div>
         </div>
 
         <div class="admin-two-col">
@@ -279,7 +279,7 @@
           <button class="btn btn-primary" id="btnAddUser">+ Add User</button>
         </div>
         <div class="alert alert-info">
-          Only the main admins (<strong>Sanjog Silwal</strong> and <strong>Dipendra Kafle</strong>) can create or remove users (admins and teachers). There is no student account in the system â€” students browse and submit anonymously.
+          Only the main admins (<strong>Sanjog Silwal</strong> and <strong>Dipendra Kafle</strong>) can create or remove users (admins and teachers). There is no student account in the system - students browse and submit anonymously.
         </div>
         <div class="table-wrap">
           <table>
@@ -344,7 +344,7 @@
     <div class="modal">
       <div class="modal-header">
         <h3 id="manualModalTitle">Upload New Manual</h3>
-        <button class="modal-close" onclick="closeModal('manualModal')">Ã—</button>
+        <button class="modal-close" onclick="closeModal('manualModal')">Ã-</button>
       </div>
       <form id="manualForm" enctype="multipart/form-data">
         <div class="modal-body">
@@ -360,7 +360,7 @@
             <div class="form-group">
               <label>Semester</label>
               <select id=”manualSemester”>
-                <option value=””>â€” Select â€”</option>
+                <option value=””>- Select -</option>
                 <option>1st Semester</option><option>2nd Semester</option>
                 <option>3rd Semester</option><option>4th Semester</option>
                 <option>5th Semester</option><option>6th Semester</option>
@@ -370,7 +370,7 @@
             </div>
             <div class="form-group">
               <label>Subject</label>
-              <select id="manualSubjectId"><option value="">â€” Select â€”</option></select>
+              <select id="manualSubjectId"><option value="">- Select -</option></select>
             </div>
           </div>
 
@@ -381,18 +381,18 @@
             </div>
             <div class="form-group">
               <label>Category</label>
-              <select id="manualCategory"><option value="">â€” Uncategorized â€”</option></select>
+              <select id="manualCategory"><option value="">- Uncategorized -</option></select>
             </div>
           </div>
 
           <div class="form-group" id="fileGroup">
-            <label>File * <small>(PDF, DOC, DOCX, PPT, ZIP â€” max 50 MB)</small></label>
+            <label>File * <small>(PDF, DOC, DOCX, PPT, ZIP - max 50 MB)</small></label>
             <input type="file" id="manualFile" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.txt" />
           </div>
 
           <div class="form-checkbox">
             <input type="checkbox" id="manualIsPublic" checked />
-            <label for="manualIsPublic">Public â€” visible to all visitors (uncheck to make Private; only signed-in users can view)</label>
+            <label for="manualIsPublic">Public - visible to all visitors (uncheck to make Private; only signed-in users can view)</label>
           </div>
         </div>
         <div class="modal-footer">
@@ -445,7 +445,7 @@
     <div class="modal">
       <div class="modal-header">
         <h3 id="subjectModalTitle">Add Subject</h3>
-        <button class="modal-close" onclick="closeModal('subjectModal')">Ã—</button>
+        <button class="modal-close" onclick="closeModal('subjectModal')">Ã-</button>
       </div>
       <form id="subjectForm">
         <div class="modal-body">
@@ -462,7 +462,7 @@
             <div class="form-group">
               <label>Semester *</label>
               <select id=”subjectSemester” required>
-                <option value=””>â€” Select â€”</option>
+                <option value=””>- Select -</option>
                 <option>1st Semester</option><option>2nd Semester</option>
                 <option>3rd Semester</option><option>4th Semester</option>
                 <option>5th Semester</option><option>6th Semester</option>
@@ -486,7 +486,7 @@
     <div class="modal">
       <div class="modal-header">
         <h3 id="deptModalTitle">Add Department</h3>
-        <button class="modal-close" onclick="closeModal('deptModal')">Ã—</button>
+        <button class="modal-close" onclick="closeModal('deptModal')">Ã-</button>
       </div>
       <form id="deptForm">
         <div class="modal-body">
@@ -510,7 +510,7 @@
     <div class="modal">
       <div class="modal-header">
         <h3 id="categoryModalTitle">Add Category</h3>
-        <button class="modal-close" onclick="closeModal('categoryModal')">Ã—</button>
+        <button class="modal-close" onclick="closeModal('categoryModal')">Ã-</button>
       </div>
       <form id="categoryForm">
         <div class="modal-body">
@@ -531,7 +531,7 @@
     <div class="modal">
       <div class="modal-header">
         <h3 id="userModalTitle">Add User</h3>
-        <button class="modal-close" onclick="closeModal('userModal')">Ã—</button>
+        <button class="modal-close" onclick="closeModal('userModal')">Ã-</button>
       </div>
       <form id="userForm">
         <div class="modal-body">
@@ -557,7 +557,7 @@
           </div>
           <div class="form-group">
             <label>Department</label>
-            <select id="userDepartment"><option value="">â€”</option></select>
+            <select id="userDepartment"><option value="">-</option></select>
           </div>
         </div>
         <div class="modal-footer">

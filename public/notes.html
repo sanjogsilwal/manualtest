@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Student Notes — Campus Study Hub</title>
+  <title>Student Notes - LearnSpace</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -57,7 +57,7 @@
             <form id="submitForm" enctype="multipart/form-data">
               <div class="form-group">
                 <label>Note Title *</label>
-                <input type="text" id="noteTitle" required placeholder="e.g. Thermodynamics Unit 3 — summary notes" />
+                <input type="text" id="noteTitle" required placeholder="e.g. Thermodynamics Unit 3 - summary notes" />
               </div>
               <div class="form-group">
                 <label>Description</label>
@@ -67,13 +67,13 @@
                 <div class="form-group">
                   <label>Department *</label>
                   <select id="noteDepartment" required>
-                    <option value="">— Select —</option>
+                    <option value="">- Select -</option>
                   </select>
                 </div>
                 <div class="form-group">
                   <label>Semester *</label>
                   <select id="noteSemester" required>
-                    <option value="">— Select —</option>
+                    <option value="">- Select -</option>
                     <option>1st Semester</option><option>2nd Semester</option>
                     <option>3rd Semester</option><option>4th Semester</option>
                     <option>5th Semester</option><option>6th Semester</option>
@@ -83,7 +83,7 @@
                 </div>
                 <div class="form-group">
                   <label>Subject</label>
-                  <select id="noteSubject"><option value="">— Select —</option></select>
+                  <select id="noteSubject"><option value="">- Select -</option></select>
                 </div>
               </div>
               <div class="form-row">
@@ -97,7 +97,7 @@
                 </div>
               </div>
               <div class="form-group">
-                <label>File * <small>(PDF, DOC, DOCX, PPT, ZIP — max 50 MB)</small></label>
+                <label>File * <small>(PDF, DOC, DOCX, PPT, ZIP - max 50 MB)</small></label>
                 <input type="file" id="noteFile" required accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.txt" />
               </div>
               <button type="submit" class="btn btn-primary" id="submitBtn">Submit Note for Review</button>
@@ -120,7 +120,7 @@
         const res = await fetch('/api/admin/departments');
         const data = await res.json();
         const sel = document.getElementById('noteDepartment');
-        sel.innerHTML = '<option value="">— Select —</option>' +
+        sel.innerHTML = '<option value="">- Select -</option>' +
           data.departments.map(d => `<option value="${d.code}">${escapeHtml(d.name)}</option>`).join('');
         data.departments.forEach(d => setDeptLabel(d.code, d.name));
       } catch (_) { /* leave default */ }
@@ -151,7 +151,7 @@
       const cur   = sel.value;
       const list  = filterSubjects(scope.department, scope.semester);
       sel.innerHTML = '<option value="">All Subjects</option>' +
-        list.map(s => `<option value="${s.id}">${escapeHtml(s.name)} — ${escapeHtml(s.semester)}</option>`).join('');
+        list.map(s => `<option value="${s.id}">${escapeHtml(s.name)} - ${escapeHtml(s.semester)}</option>`).join('');
       sel.value = cur;
     }
 
@@ -162,11 +162,11 @@
       const sem  = document.getElementById('noteSemester').value;
       const list = filterSubjects(dept, sem);
       if (list.length === 0 && (dept || sem)) {
-        sel.innerHTML = '<option value="">— No subjects for this department / semester —</option>';
+        sel.innerHTML = '<option value="">- No subjects for this department / semester -</option>';
         return;
       }
-      sel.innerHTML = '<option value="">— Select —</option>' +
-        list.map(s => `<option value="${s.id}">${escapeHtml(s.name)} — ${escapeHtml(s.semester)}</option>`).join('');
+      sel.innerHTML = '<option value="">- Select -</option>' +
+        list.map(s => `<option value="${s.id}">${escapeHtml(s.name)} - ${escapeHtml(s.semester)}</option>`).join('');
       sel.value = cur;
     }
 
