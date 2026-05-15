@@ -11,15 +11,15 @@ export default function Footer() {
                 className="brand-logo"
                 src="/images/tu-logo.jpeg"
                 alt="Tribhuvan University"
-                style={{ width: 40, height: 40 }}
-                onError={e => { e.target.outerHTML = '<div class="brand-logo placeholder" style="width:40px;height:40px;font-size:14px;">TU</div>'; }}
+                style={{ width: 48, height: 48 }}
+                onError={e => { e.target.outerHTML = '<div class="brand-logo placeholder" style="width:48px;height:48px;font-size:14px;">TU</div>'; }}
               />
               <div className="brand-text">
-                <span className="uni">Tribhuvan University</span>
-                <h1>IOE, Thapathali Campus</h1>
+                <span className="ioe">Institute of Engineering</span>
+                <strong className="footer-campus">Thapathali Campus</strong>
               </div>
             </div>
-            <p>LearnSpace</p>
+            <p className="footer-accred">Accredited by University Grants Commission (UGC) Nepal. Quality Education Since 1930 A.D.</p>
           </div>
           <div className="footer-col">
             <h4>Quick Access</h4>

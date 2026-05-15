@@ -32,9 +32,9 @@ export default function Header() {
               onError={e => { e.target.outerHTML = '<div class="brand-logo placeholder">TU</div>'; }}
             />
             <div className="brand-text">
-              <span className="uni">Tribhuvan University</span>
-              <h1>IOE, Thapathali Campus</h1>
-              <span className="campus"></span>
+              <strong className="uni">Tribhuvan University</strong>
+              <span className="ioe">Institute of Engineering</span>
+              <span className="campus">Thapathali Campus</span>
             </div>
           </Link>
           <div className="accreditation">
