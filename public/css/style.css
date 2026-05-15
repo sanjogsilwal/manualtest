@@ -648,10 +648,24 @@ main { flex: 1; padding: 36px 0; }
   padding: 14px;
   margin-bottom: 22px;
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 2fr auto;
+  /* `minmax(0, 1fr)` (not bare `1fr`) lets columns shrink below their
+     children's min-content — required so long <select> options don't
+     blow the bar past the viewport on Android. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr) auto;
   gap: 10px;
   align-items: center;
   box-shadow: var(--shadow-sm);
+  /* Belt-and-suspenders: keeps the bar inside its container even if a child
+     reports an oversized intrinsic width (mobile <select> quirk on Android). */
+  max-width: 100%;
+  overflow: hidden;
+}
+/* Allow grid children (inputs, selects, button) to shrink below their
+   intrinsic content width — without this, a long <option> like
+   "Engineering Mathematics I" forces its column wider than the viewport. */
+.filter-bar > * {
+  min-width: 0;
+  max-width: 100%;
 }
 .filter-bar input,
 .filter-bar select {
@@ -662,6 +676,12 @@ main { flex: 1; padding: 36px 0; }
   font-size: 14px;
   background: #fff;
   color: var(--text);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.filter-bar .btn {
+  box-sizing: border-box;
 }
 .filter-bar input:focus,
 .filter-bar select:focus {
@@ -834,6 +854,7 @@ table tr:last-child td { border-bottom: 0; }
   display: grid;
   grid-template-columns: 240px 1fr;
   min-height: calc(100vh - 80px);
+  overflow: hidden;
 }
 .admin-sidebar {
   background: var(--panel);
@@ -865,7 +886,7 @@ table tr:last-child td { border-bottom: 0; }
 }
 .admin-nav li a:hover { background: rgba(45, 74, 53, .06); color: var(--panel-text); border-left-color: var(--accent); }
 .admin-nav li a.active { background: rgba(45, 74, 53, .1); color: var(--panel-text); border-left-color: var(--accent); }
-.admin-content { padding: 28px 32px; background: var(--bg); }
+.admin-content { padding: 28px 32px; background: var(--bg); min-width: 0; overflow-x: hidden; }
 .admin-section { display: none; }
 .admin-section.active { display: block; }
 
@@ -1119,10 +1140,18 @@ table tr:last-child td { border-bottom: 0; }
   .footer-grid    { grid-template-columns: 1fr 1fr; }
   .feature-grid   { grid-template-columns: 1fr 1fr; }
   .research-grid  { grid-template-columns: 1fr 1fr; }
-  .filter-bar     { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  /* 3-up filter row with search and reset spanning full width. */
+  .filter-bar     { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); }
+  .filter-bar input[type=search] { grid-column: 1 / -1; }
+  .filter-bar .btn { grid-column: 1 / -1; width: 100%; justify-content: center; }
   .filter-bar-hint { display: none; }
   .admin-layout   { grid-template-columns: 200px 1fr; }
-  .admin-content  { padding: 20px 22px; }
+  .admin-content  { padding: 20px 22px; min-width: 0; }
+}
+
+/* ---- Phone landscape / small tablet: ≤ 640px -------------------------- */
+@media (max-width: 640px) {
+  .filter-bar     { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
 
 /* ---- Mobile: ≤ 768px -------------------------------------------------- */
@@ -1182,12 +1211,6 @@ table tr:last-child td { border-bottom: 0; }
   .form-row   { grid-template-columns: 1fr; gap: 0; }
   .form-row-3 { grid-template-columns: 1fr; gap: 0; }
 
-  /* Filter bar → full-width stacked */
-  .filter-bar { grid-template-columns: 1fr 1fr; }
-  .filter-bar input[type=search] { grid-column: 1 / -1; }
-  .filter-bar .btn { grid-column: 1 / -1; width: 100%; justify-content: center; }
-  .filter-bar-hint { display: none; }
-
   /* Scope bar */
   .scope-bar .hint { display: none; }
   .scope-bar .container { gap: 8px; }
@@ -1238,7 +1261,7 @@ table tr:last-child td { border-bottom: 0; }
   .section-title        { font-size: 20px; }
 
   /* Compact filter bar on very small screens */
-  .filter-bar           { padding: 10px; gap: 8px; grid-template-columns: 1fr; }
+  .filter-bar           { padding: 10px; gap: 8px; grid-template-columns: minmax(0, 1fr); }
   .filter-bar input[type=search] { grid-column: 1; }
-  .filter-bar .btn      { grid-column: 1; }
+  .filter-bar .btn      { grid-column: 1; width: 100%; justify-content: center; }
 }

@@ -16,7 +16,7 @@ export function fileIcon(type) {
   return (type || 'FILE').toString().toUpperCase();
 }
 
-const _deptLabelCache = { automobile: 'Automobile', mechanical: 'Mechanical', both: 'All Departments' };
+const _deptLabelCache = { automobile: 'Automobile', mechanical: 'Mechanical' };
 
 export function deptLabel(d) {
   if (!d) return '';

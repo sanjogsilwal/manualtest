@@ -79,7 +79,11 @@ module.exports = (db) => {
     const { department, semester, sort } = req.query;
     let sql = `
       SELECT s.*,
-             (SELECT COUNT(*) FROM manuals       m WHERE m.subject_id = s.id) AS manual_count,
+             CASE
+               WHEN s.code != '' AND s.code IS NOT NULL
+               THEN (SELECT COUNT(*) FROM manuals m JOIN subjects sx ON m.subject_id = sx.id WHERE sx.code = s.code)
+               ELSE (SELECT COUNT(*) FROM manuals m WHERE m.subject_id = s.id)
+             END AS manual_count,
              (SELECT COUNT(*) FROM student_notes n WHERE n.subject_id = s.id AND n.status = 'approved') AS notes_count
         FROM subjects s
        WHERE 1=1

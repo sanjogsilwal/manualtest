@@ -119,8 +119,7 @@
         const data = await res.json();
         const sel = document.getElementById('noteDepartment');
         sel.innerHTML = '<option value="">— Select —</option>' +
-          data.departments.map(d => `<option value="${d.code}">${escapeHtml(d.name)}</option>`).join('') +
-          '<option value="both">All Departments</option>';
+          data.departments.map(d => `<option value="${d.code}">${escapeHtml(d.name)}</option>`).join('');
         data.departments.forEach(d => setDeptLabel(d.code, d.name));
       } catch (_) { /* leave default */ }
     }
@@ -138,7 +137,7 @@
     function filterSubjects(department, semester) {
       const dept = (department || '').toLowerCase();
       return allSubjects.filter(s => {
-        if (dept && dept !== 'both' && s.department !== dept && s.department !== 'both') return false;
+        if (dept && s.department !== dept) return false;
         if (semester && s.semester !== semester) return false;
         return true;
       });

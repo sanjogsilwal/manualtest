@@ -383,7 +383,6 @@ function ManualsSection({ showAlert, allCategories, allSubjects, allDepartments,
         </select>
         <select value={filters.department} onChange={e => setFilters(f => ({ ...f, department: e.target.value }))}>
           <option value="">All Departments</option>
-          <option value="both">All Departments (Both)</option>
           {allDepartments.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
         </select>
         <select value={filters.semester} onChange={e => setFilters(f => ({ ...f, semester: e.target.value }))}>
@@ -461,7 +460,7 @@ function ManualsSection({ showAlert, allCategories, allSubjects, allDepartments,
 }
 
 function ManualModal({ isOpen, manual, allCategories, allSubjects, allDepartments, onClose, onDone, showAlert }) {
-  const [form, setForm] = useState({ title: '', description: '', subject: '', semester: '', department: 'both', subject_id: '', category_id: '', is_public: true });
+  const [form, setForm] = useState({ title: '', description: '', subject: '', semester: '', department: '', subject_id: '', category_id: '', is_public: true });
   const [fileItems, setFileItems] = useState([]);
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef(null);
@@ -469,14 +468,18 @@ function ManualModal({ isOpen, manual, allCategories, allSubjects, allDepartment
   useEffect(() => {
     if (!isOpen) return;
     if (manual) {
+      // Existing rows may still have department='both' from before that option
+      // was removed. Treat those as unset so the admin must pick a real dept
+      // before saving (the select is `required`).
+      const dept = manual.department && manual.department !== 'both' ? manual.department : '';
       setForm({
         title: manual.title || '', description: manual.description || '',
         subject: manual.subject || '', semester: manual.semester || '',
-        department: manual.department || 'both', subject_id: manual.subject_id || '',
+        department: dept, subject_id: manual.subject_id || '',
         category_id: manual.category_id || '', is_public: !!manual.is_public
       });
     } else {
-      setForm({ title: '', description: '', subject: '', semester: '', department: 'both', subject_id: '', category_id: '', is_public: true });
+      setForm({ title: '', description: '', subject: '', semester: '', department: '', subject_id: '', category_id: '', is_public: true });
       setFileItems([]);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
@@ -499,7 +502,7 @@ function ManualModal({ isOpen, manual, allCategories, allSubjects, allDepartment
   function filteredSubjects() {
     const dept = (form.department || '').toLowerCase();
     return allSubjects.filter(s => {
-      if (dept && dept !== 'both' && s.department !== dept && s.department !== 'both') return false;
+      if (dept && s.department !== dept) return false;
       if (form.semester && s.semester !== form.semester) return false;
       return true;
     });
@@ -607,7 +610,7 @@ function ManualModal({ isOpen, manual, allCategories, allSubjects, allDepartment
         <div className="form-row-3">
           <div className="form-group"><label>Department *</label>
             <select required value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value, subject_id: '' }))}>
-              <option value="both">All Departments (Both)</option>
+              <option value="">— Select —</option>
               {allDepartments.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
             </select>
           </div>
@@ -823,16 +826,16 @@ function SubjectsSection({ showAlert, allSubjects, allDepartments, reloadSubject
   const [modal, setModal] = useState({ open: false, subject: null });
   const [importModalOpen, setImportModalOpen] = useState(false);
 
-  const depts = [...allDepartments, { code: 'both', name: 'Common (Both Depts)' }];
+  const depts = allDepartments;
 
   const eligibleSems = [...new Set(
     allSubjects
-      .filter(s => !deptSel || s.department === deptSel || s.department === 'both')
+      .filter(s => !deptSel || s.department === deptSel)
       .map(s => s.semester)
   )].sort((a, b) => SEM_ORDER.indexOf(a) - SEM_ORDER.indexOf(b));
 
   const list = allSubjects.filter(s =>
-    (!deptSel || s.department === deptSel || s.department === 'both') &&
+    (!deptSel || s.department === deptSel) &&
     (!semSel || s.semester === semSel)
   );
 
@@ -943,7 +946,7 @@ function SubjectsSection({ showAlert, allSubjects, allDepartments, reloadSubject
 }
 
 function SubjectImportModal({ isOpen, allDepartments, onClose, onImported, showAlert }) {
-  const [department, setDepartment] = useState('both');
+  const [department, setDepartment] = useState('');
   const [file, setFile] = useState(null);
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState(null);
@@ -951,14 +954,15 @@ function SubjectImportModal({ isOpen, allDepartments, onClose, onImported, showA
 
   useEffect(() => {
     if (isOpen) {
-      setDepartment('both');
+      // Default to the first real department if available, else empty (forces explicit pick)
+      setDepartment(allDepartments[0]?.code || '');
       setFile(null);
       setResult(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
-  }, [isOpen]);
+  }, [isOpen, allDepartments]);
 
-  const depts = [...allDepartments, { code: 'both', name: 'Common (Both Departments)' }];
+  const depts = allDepartments;
 
   async function handleImport() {
     if (!file) { showAlert('error', 'Please select a file'); return; }
@@ -1015,6 +1019,7 @@ function SubjectImportModal({ isOpen, allDepartments, onClose, onImported, showA
       <div className="form-group">
         <label>Department *</label>
         <select required value={department} onChange={e => setDepartment(e.target.value)}>
+          <option value="" disabled>— Select —</option>
           {depts.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
         </select>
       </div>
@@ -1049,11 +1054,21 @@ function SubjectImportModal({ isOpen, allDepartments, onClose, onImported, showA
 }
 
 function SubjectModal({ isOpen, subject, allDepartments, onClose, onSave }) {
-  const [form, setForm] = useState({ id: '', name: '', code: '', department: 'both', semester: '', description: '' });
+  const [form, setForm] = useState({ id: '', name: '', code: '', department: '', semester: '', description: '' });
   useEffect(() => {
+    // Existing subjects may have department='both' from before that option
+    // was removed. Reset those to '' so the admin must pick a real dept
+    // before saving (the select is `required`).
     setForm(subject
-      ? { id: subject.id, name: subject.name, code: subject.code || '', department: subject.department, semester: subject.semester, description: subject.description || '' }
-      : { id: '', name: '', code: '', department: 'both', semester: '', description: '' });
+      ? {
+          id: subject.id,
+          name: subject.name,
+          code: subject.code || '',
+          department: subject.department && subject.department !== 'both' ? subject.department : '',
+          semester: subject.semester,
+          description: subject.description || ''
+        }
+      : { id: '', name: '', code: '', department: '', semester: '', description: '' });
   }, [subject, isOpen]);
 
   async function handleSubmit(e) {
@@ -1082,7 +1097,7 @@ function SubjectModal({ isOpen, subject, allDepartments, onClose, onSave }) {
         <div className="form-row">
           <div className="form-group"><label>Department *</label>
             <select required value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))}>
-              <option value="both">All Departments (Both)</option>
+              <option value="">— Select —</option>
               {allDepartments.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
             </select>
           </div>

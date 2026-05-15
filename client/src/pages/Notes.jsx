@@ -59,7 +59,7 @@ export default function Notes() {
   function filterSubjects(department, semester) {
     const dept = (department || '').toLowerCase();
     return allSubjects.filter(s => {
-      if (dept && dept !== 'both' && s.department !== dept && s.department !== 'both') return false;
+      if (dept && s.department !== dept) return false;
       if (semester && s.semester !== semester) return false;
       return true;
     });
@@ -223,7 +223,6 @@ export default function Notes() {
                         onChange={e => setFormData(f => ({ ...f, department: e.target.value, subject_id: '' }))}>
                         <option value="">— Select —</option>
                         {noteDepts.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
-                        <option value="both">All Departments</option>
                       </select>
                     </div>
                     <div className="form-group">

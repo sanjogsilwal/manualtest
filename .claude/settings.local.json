@@ -32,7 +32,24 @@
       "PowerShell(Start-Process \"http://localhost:3000\")",
       "Bash(npx kill-port *)",
       "PowerShell(Get-Process *)",
-      "PowerShell(Start-Process \"http://localhost:3000/manuals\")"
+      "PowerShell(Start-Process \"http://localhost:3000/manuals\")",
+      "Bash(node -e \"const db = require\\('better-sqlite3'\\)\\('database.db'\\); const subjects = db.prepare\\('SELECT * FROM subjects WHERE department = ? OR department = ?'\\).all\\('both', 'common'\\); console.log\\(JSON.stringify\\(subjects, null, 2\\)\\);\")",
+      "Bash(node -e \"const db = require\\('better-sqlite3'\\)\\('database.db'\\); const subjects = db.prepare\\('SELECT * FROM subjects'\\).all\\(\\); console.log\\(JSON.stringify\\(subjects, null, 2\\)\\);\")",
+      "Bash(node -e \"const fs = require\\('fs'\\); const content = fs.readFileSync\\('public/admin.html', 'utf8'\\); const lines = content.split\\('\\\\n'\\); lines.forEach\\(\\(l,i\\) => { if\\(l.toLowerCase\\(\\).includes\\('both'\\) || l.toLowerCase\\(\\).includes\\('common'\\)\\) console.log\\(i+1, l\\); }\\);\")",
+      "Bash(node -e \"const fs = require\\('fs'\\); const content = fs.readFileSync\\('public/admin.js', 'utf8'\\); const lines = content.split\\('\\\\n'\\); lines.forEach\\(\\(l,i\\) => { if\\(l.toLowerCase\\(\\).includes\\('both'\\) || l.toLowerCase\\(\\).includes\\('common'\\)\\) console.log\\(i+1, l\\); }\\);\")",
+      "Bash(node -e ' *)",
+      "Bash(node -e \"require\\('./routes/manuals'\\)\\(require\\('better-sqlite3'\\)\\('database.db'\\)\\); require\\('./routes/subjects'\\)\\(require\\('better-sqlite3'\\)\\('database.db'\\)\\); console.log\\('Routes load OK'\\);\")",
+      "Bash(node -e \"require\\('./server.js'\\)\")",
+      "Bash(Get-Content \"C:\\\\Users\\\\DIPEND~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Dipendra-Kafle-OneDrive-Desktop-manuals-system\\\\aff8cc7f-719f-4d06-88d0-8e9c3136387b\\\\tasks\\\\b607likis.output\")",
+      "PowerShell(Invoke-RestMethod \"http://localhost:3000/api/admin/departments\" | ConvertTo-Json -Depth 3)",
+      "PowerShell(Invoke-RestMethod \"http://localhost:3000/api/manuals\" | ConvertTo-Json -Depth 2 | Select-Object -First 60)",
+      "PowerShell(Invoke-RestMethod \"http://localhost:3000/api/manuals?department=automobile\" | ConvertTo-Json -Depth 1)",
+      "PowerShell(Invoke-RestMethod \"http://localhost:3000/api/admin/categories\" | ConvertTo-Json -Depth 2)",
+      "PowerShell(Invoke-RestMethod \"http://localhost:3000/api/subjects?department=automobile&semester=1st+Semester\" | ConvertTo-Json -Depth 2 | Select-Object -First 40)",
+      "PowerShell(Invoke-RestMethod \"http://localhost:3000/api/manuals?search=rotor\" | ConvertTo-Json -Depth 1)",
+      "PowerShell(Start-Sleep 2; Invoke-RestMethod \"http://localhost:3000/api/manuals?department=13\" | ConvertTo-Json -Depth 1)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

@@ -79,8 +79,8 @@ function buildHeader(activePage = '') {
 }
 
 function buildScopeBar(activePage) {
-  // Scope bar only appears on the resource-listing pages, not on home.
-  if (!['manuals', 'notes'].includes(activePage)) return '';
+  // Scope bar only appears on the notes page; manuals uses inline filters.
+  if (activePage !== 'notes') return '';
   const scope = getScope();
   const semesters = [
     '1st Semester','2nd Semester','3rd Semester','4th Semester',
@@ -223,7 +223,7 @@ function fileIcon(type) {
 
 // Department dropdown options are populated dynamically from the API,
 // but for legacy data the label cache below maps known codes to names.
-const _deptLabelCache = { automobile: 'Automobile', mechanical: 'Mechanical', both: 'All Departments' };
+const _deptLabelCache = { automobile: 'Automobile', mechanical: 'Mechanical' };
 function deptLabel(d) {
   if (!d) return '';
   if (_deptLabelCache[d]) return _deptLabelCache[d];

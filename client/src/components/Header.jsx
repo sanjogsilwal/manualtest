@@ -19,7 +19,9 @@ export default function Header() {
     : location.pathname === '/login' ? 'login'
     : '';
 
-  const showScopeBar = page === 'manuals' || page === 'notes';
+  // The Lab Manuals page now owns its own department/semester filters in
+  // its filter bar, so the global scope bar is only shown on the Notes page.
+  const showScopeBar = page === 'notes';
 
   function isActive(p) {
     return page === p ? 'active' : '';

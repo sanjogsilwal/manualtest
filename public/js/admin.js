@@ -110,11 +110,10 @@ async function loadAllDepartments() {
   }
 }
 
-function deptOptionsHtml(includeBoth, currentValue) {
-  const both = includeBoth
-    ? `<option value="both" ${currentValue === 'both' ? 'selected' : ''}>All Departments (Both)</option>`
-    : '';
-  return both + allDepartments.map(d =>
+function deptOptionsHtml(_unused, currentValue) {
+  // The "All Departments (Both)" option has been removed system-wide.
+  // The first arg is kept so existing call sites still work.
+  return allDepartments.map(d =>
     `<option value="${d.code}" ${currentValue === d.code ? 'selected' : ''}>${escapeHtml(d.name)}</option>`
   ).join('');
 }
@@ -124,15 +123,15 @@ function populateDeptDropdowns() {
   const fil = $('adminDeptFilter');
   if (fil) {
     const cur = fil.value;
-    fil.innerHTML = '<option value="">All Departments</option>' + deptOptionsHtml(true, cur);
+    fil.innerHTML = '<option value="">All Departments</option>' + deptOptionsHtml(false, cur);
     fil.value = cur;
   }
   // Manual upload modal
   const m = $('manualDepartment');
-  if (m) m.innerHTML = deptOptionsHtml(true, m.value || 'both');
+  if (m) m.innerHTML = '<option value="">— Select —</option>' + deptOptionsHtml(false, m.value || '');
   // Subject modal
   const s = $('subjectDepartment');
-  if (s) s.innerHTML = deptOptionsHtml(true, s.value || 'both');
+  if (s) s.innerHTML = '<option value="">— Select —</option>' + deptOptionsHtml(false, s.value || '');
   // User modal
   const u = $('userDepartment');
   if (u) {
@@ -267,10 +266,10 @@ $('btnUpload').addEventListener('click', () => {
   $('manualFile').required = true;
   $('manualIsPublic').checked = true;
   populateDeptDropdowns();
-  $('manualDepartment').value = 'both';
+  $('manualDepartment').value = '';
   $('manualSemester').value   = '';
   populateCategorySelect($('manualCategory'));
-  populateSubjectSelect($('manualSubjectId'), '', 'both', '');
+  populateSubjectSelect($('manualSubjectId'), '', '', '');
   openModal('manualModal');
 });
 
@@ -287,9 +286,11 @@ async function editManual(id) {
     $('manualSubject').value      = m.subject || '';
     $('manualSemester').value     = m.semester || '';
     populateDeptDropdowns();
-    $('manualDepartment').value   = m.department || 'both';
+    // 'both' is no longer a valid department; treat such legacy rows as unset.
+    const dept = m.department && m.department !== 'both' ? m.department : '';
+    $('manualDepartment').value   = dept;
     populateCategorySelect($('manualCategory'), m.category_id);
-    populateSubjectSelect($('manualSubjectId'), m.subject_id, m.department || 'both', m.semester || '');
+    populateSubjectSelect($('manualSubjectId'), m.subject_id, dept, m.semester || '');
     $('manualIsPublic').checked   = !!m.is_public;
     $('fileGroup').style.display  = 'none';
     $('manualFile').required      = false;
@@ -537,7 +538,7 @@ function renderSubjects() {
 function renderSubjectDeptCol() {
   const col = $('subjectsDeptCol');
   if (!col) return;
-  const depts = [...allDepartments, { code: 'both', name: 'Common (Both Depts)' }];
+  const depts = [...allDepartments];
   col.innerHTML = depts.map(d => `
     <div class="subjects-col-item ${subjectsDeptSel === d.code ? 'active' : ''}"
          onclick="selectSubjectDept('${d.code}')">
@@ -553,7 +554,7 @@ function renderSubjectSemCol() {
     return;
   }
   const eligible = allSubjects.filter(s =>
-    s.department === subjectsDeptSel || s.department === 'both'
+    s.department === subjectsDeptSel
   );
   const sems = [...new Set(eligible.map(s => s.semester))]
     .sort((a, b) => SEM_ORDER.indexOf(a) - SEM_ORDER.indexOf(b));
@@ -583,7 +584,7 @@ function renderSubjectListCol() {
     return;
   }
   const list = allSubjects.filter(s =>
-    (s.department === subjectsDeptSel || s.department === 'both') &&
+    s.department === subjectsDeptSel &&
     s.semester === subjectsSemSel
   );
   if (header) header.textContent = `Subjects — ${subjectsSemSel} (${list.length})`;
@@ -625,14 +626,10 @@ function selectSubjectSem(sem) {
   renderSubjectListCol();
 }
 
-/**
- * Filter the manual upload form's subject dropdown by department + semester.
- * Subjects from the same department or 'both' are eligible; the rest are hidden.
- */
 function populateSubjectSelect(sel, current = '', department = '', semester = '') {
   const dept = (department || '').toLowerCase();
   let list = allSubjects.filter(s => {
-    if (dept && dept !== 'both' && s.department !== dept && s.department !== 'both') return false;
+    if (dept && s.department !== dept) return false;
     if (semester && s.semester !== semester) return false;
     return true;
   });
@@ -664,7 +661,7 @@ $('btnAddSubject').addEventListener('click', () => {
   $('subjectForm').reset();
   $('subjectId').value = '';
   populateDeptDropdowns();
-  $('subjectDepartment').value = 'both';
+  $('subjectDepartment').value = allDepartments[0]?.code || '';
   openModal('subjectModal');
 });
 
@@ -674,7 +671,7 @@ $('btnImportSubjects').addEventListener('click', () => {
   $('importSubjectResult').innerHTML = '';
   // Populate department dropdown (same options as the add form)
   const sel = $('importSubjectDepartment');
-  const depts = [...allDepartments, { code: 'both', name: 'Common (Both Departments)' }];
+  const depts = [...allDepartments];
   sel.innerHTML = depts.map(d =>
     `<option value="${escapeHtml(d.code)}">${escapeHtml(d.name)}</option>`
   ).join('');
