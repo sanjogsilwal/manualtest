@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -9,19 +8,12 @@ import About from './pages/About';
 import Login from './pages/Login';
 import Admin from './pages/Admin/index';
 import NotFound from './pages/NotFound';
-import { init, destroy } from './utils/scrollReveal';
 
 export default function App() {
   const location = useLocation();
   const isAdmin = location.pathname.startsWith('/admin');
   const isLogin = location.pathname === '/login';
   const hideLayout = isAdmin || isLogin;
-
-  // Start scroll-reveal once; MutationObserver inside handles all re-renders.
-  useEffect(() => {
-    init();
-    return destroy;
-  }, []);
 
   return (
     <>
